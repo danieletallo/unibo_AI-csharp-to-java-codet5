@@ -65,6 +65,7 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
         per_device_train_batch_size=16,        # how many examples are grouped in one training batch
         num_train_epochs=10,                   # how many full passes over the training set
         load_best_model_at_end=True,           # after training, automatically reload the checkpoint with the best validation score
+        report_to="none",                      # don't send logs to wandb/other external trackers
     )
 
     # The Trainer is the object that actually runs the training loop: it feeds
@@ -78,7 +79,7 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
         train_dataset=tokenized_dataset["train"],
         eval_dataset=tokenized_dataset["validation"],
         data_collator=data_collator,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
     )
     return trainer, training_args
 
