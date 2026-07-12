@@ -9,6 +9,7 @@ Records the training parameters used (learning rate, batch size, number
 of epochs, maximum length).
 """
 
+import torch
 from transformers import (
     AutoTokenizer,
     AutoModelForSeq2SeqLM,
@@ -62,7 +63,7 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
         eval_strategy="epoch",                 # run evaluation on the validation set once per epoch
         save_strategy="epoch",                 # save a checkpoint once per epoch (so eval_strategy and save_strategy line up)
         learning_rate=5e-5,                    # how big a step the model takes when correcting its mistakes
-        per_device_train_batch_size=16,        # how many examples are grouped in one training batch
+        per_device_train_batch_size=8,          # how many examples are grouped in one training batch (kept low enough to fit codet5-base on a 16GB GPU)
         num_train_epochs=10,                   # how many full passes over the training set
         load_best_model_at_end=True,           # after training, automatically reload the checkpoint with the best validation score
         report_to="none",                      # don't send logs to wandb/other external trackers
@@ -88,24 +89,28 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
 trainer_small, training_args_small = build_trainer(model_small, tokenizer_small, tokenized_small, f"{DRIVE_DIR}/results_codet5_small")
 trainer_base, training_args_base = build_trainer(model_base, tokenizer_base, tokenized_base, f"{DRIVE_DIR}/results_codet5_base")
 
-# --- Actually training both models ---
+# --- Actually training both models, one at a time ---
 # trainer.train() runs the training loop configured above. Thanks to
 # load_best_model_at_end=True, once it finishes, trainer.model holds the
 # checkpoint that scored best on the validation set, not just the last one.
+# Each model is trained, saved, and then cleared from GPU memory before the
+# next one starts -- otherwise codet5-small's memory stays reserved on the
+# GPU and codet5-base (much bigger) runs out of memory on top of it.
 print("Training codet5-small...")
 trainer_small.train()
-
-print("Training codet5-base...")
-trainer_base.train()
-
-# --- Saving the fine-tuned models ---
-# Saves the best checkpoint (see load_best_model_at_end above) plus its
-# tokenizer to disk, so Phase C can reload them without repeating training.
 trainer_small.save_model(f"{DRIVE_DIR}/fine_tuned_codet5_small")
 tokenizer_small.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_small")
 
+del trainer_small, model_small
+torch.cuda.empty_cache()
+
+print("Training codet5-base...")
+trainer_base.train()
 trainer_base.save_model(f"{DRIVE_DIR}/fine_tuned_codet5_base")
 tokenizer_base.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_base")
+
+del trainer_base, model_base
+torch.cuda.empty_cache()
 
 # --- Recording the training parameters used ---
 # Phase C/D will compare the two models, so the settings used to train them
