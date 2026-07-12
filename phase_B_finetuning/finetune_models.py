@@ -18,6 +18,11 @@ from transformers import (
 )
 from phase_A_preparation.prepare_dataset import load_and_prepare_dataset, preprocess_function
 
+# All checkpoints and fine-tuned models are saved under Google Drive instead of
+# the Colab session's local disk, so nothing is lost if the session disconnects.
+# Assumes drive.mount("/content/drive") was already run in the notebook.
+DRIVE_DIR = "/content/drive/MyDrive/csharp_to_java_project"
+
 # Loading tokenizer and models from Hugging Face Transformers (codet5-small and codet5-base):
 # codet5-small
 tokenizer_small = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
@@ -79,8 +84,8 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
 
 
 # --- Setting up training for both models ---
-trainer_small, training_args_small = build_trainer(model_small, tokenizer_small, tokenized_small, "./results_codet5_small")
-trainer_base, training_args_base = build_trainer(model_base, tokenizer_base, tokenized_base, "./results_codet5_base")
+trainer_small, training_args_small = build_trainer(model_small, tokenizer_small, tokenized_small, f"{DRIVE_DIR}/results_codet5_small")
+trainer_base, training_args_base = build_trainer(model_base, tokenizer_base, tokenized_base, f"{DRIVE_DIR}/results_codet5_base")
 
 # --- Actually training both models ---
 # trainer.train() runs the training loop configured above. Thanks to
@@ -95,11 +100,11 @@ trainer_base.train()
 # --- Saving the fine-tuned models ---
 # Saves the best checkpoint (see load_best_model_at_end above) plus its
 # tokenizer to disk, so Phase C can reload them without repeating training.
-trainer_small.save_model("./fine_tuned_codet5_small")
-tokenizer_small.save_pretrained("./fine_tuned_codet5_small")
+trainer_small.save_model(f"{DRIVE_DIR}/fine_tuned_codet5_small")
+tokenizer_small.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_small")
 
-trainer_base.save_model("./fine_tuned_codet5_base")
-tokenizer_base.save_pretrained("./fine_tuned_codet5_base")
+trainer_base.save_model(f"{DRIVE_DIR}/fine_tuned_codet5_base")
+tokenizer_base.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_base")
 
 # --- Recording the training parameters used ---
 # Phase C/D will compare the two models, so the settings used to train them
