@@ -15,6 +15,8 @@ whether fine-tuning is actually adding value on this task.
 import json
 import os
 import re
+import sys
+import traceback
 
 import evaluate
 import torch
@@ -194,22 +196,31 @@ def save_results(results, best_finetuned_name, output_dir):
     print(f"Saved results to {output_path}")
 
 
-if __name__ == "__main__":
+def run_evaluation():
+    print("Step 1/4: loading and preparing the test dataset...", flush=True)
     prepared_dataset = load_and_prepare_dataset()
     source_texts = prepared_dataset["test"]["cs"]
     reference_texts = prepared_dataset["test"]["java"]
+    print(f"Test set ready: {len(source_texts)} examples.", flush=True)
 
     device = get_device()
+    print(f"Step 2/4: using device '{device}'.", flush=True)
+
+    print("Step 3/4: loading the sacrebleu metric...", flush=True)
     bleu_metric = evaluate.load("sacrebleu")
 
+    print("Step 4/4: evaluating each model in MODEL_CONFIGS...", flush=True)
     results = []
     for config in MODEL_CONFIGS:
-        print(f"Evaluating {config['name']}...")
+        print(f"[{config['name']}] loading model from '{config['model_path']}'...", flush=True)
         model, tokenizer = load_model_and_tokenizer(config["model_path"])
 
+        print(f"[{config['name']}] model loaded, generating translations for {len(source_texts)} examples...", flush=True)
         evaluation = evaluate_model(
             config["name"], model, tokenizer, source_texts, reference_texts, device, bleu_metric,
         )
+        print(f"[{config['name']}] corpus BLEU: {evaluation['corpus_bleu']:.2f}, exact match: {evaluation['exact_match']:.2f}%", flush=True)
+
         worst_examples = find_worst_examples(source_texts, reference_texts, evaluation["predictions"], evaluation["sentence_bleus"])
         print_worst_examples(config["name"], worst_examples)
         error_categories = categorize_common_errors(evaluation["predictions"], reference_texts, evaluation["sentence_bleus"], max_length=256)
@@ -223,8 +234,19 @@ if __name__ == "__main__":
         })
 
         del model, tokenizer
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     best_finetuned = compare_models(results)
     compare_finetuned_vs_zeroshot(results)
     save_results(results, best_finetuned["name"], f"{DRIVE_DIR}/phase_C_results")
+    print("Done.", flush=True)
+
+
+if __name__ == "__main__":
+    try:
+        run_evaluation()
+    except Exception:
+        print("Phase C evaluation crashed -- full traceback below:", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        sys.exit(1)
