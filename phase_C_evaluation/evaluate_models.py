@@ -12,8 +12,16 @@ Also compares each fine-tuned model against its own zero-shot baseline
 whether fine-tuning is actually adding value on this task.
 """
 
-import json
 import os
+
+# Useful for running in Colab, where TensorFlow is installed by default and
+# can conflict with PyTorch. Disables TF and its logging, so only PyTorch
+# and Hugging Face Transformers are used. 
+os.environ["USE_TF"] = "0"
+os.environ["TRANSFORMERS_NO_TF"] = "1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+import json
 import re
 import sys
 import traceback
