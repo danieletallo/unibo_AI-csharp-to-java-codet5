@@ -1,0 +1,181 @@
+{
+  "best_finetuned_model": "codet5-small (fine-tuned)",
+  "models": [
+    {
+      "name": "codet5-small (fine-tuned)",
+      "model_path": "/content/drive/MyDrive/csharp_to_java_project/fine_tuned_codet5_small",
+      "corpus_bleu": 89.48633394065834,
+      "exact_match": 64.7,
+      "error_categories": {
+        "empty_output": 0,
+        "likely_truncated": 0,
+        "near_miss": 244,
+        "other_mismatch": 109
+      },
+      "worst_examples": [
+        {
+          "cs": "public POIFSFileSystem(){HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList();_root           = null;}\n",
+          "java_reference": "public POIFSFileSystem() {this(true);_header.setBATCount(1);_header.setBATArray(new int[]{1});BATBlock bb = BATBlock.createEmptyBATBlock(bigBlockSize, false);bb.setOurBlockIndex(1);_bat_blocks.add(bb);setNextBlock(0, POIFSConstants.END_OF_CHAIN);setNextBlock(1, POIFSConstants.FAT_SECTOR_BLOCK);_property_table.setStartBlock(0);}\n",
+          "java_prediction": "public POIFSFileSystem() {_headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList<>();_root           = null;}\n",
+          "sentence_bleu": 7.258903316580489
+        },
+        {
+          "cs": "public int CompareTo(object other) {BytesRef br = other as BytesRef;Debug.Assert(br != null);return utf8SortedAsUnicodeSortOrder.Compare(this, br);}\n",
+          "java_reference": "public int compareTo(BytesRef other) {return Arrays.compareUnsigned(this.bytes, this.offset, this.offset + this.length,other.bytes, other.offset, other.offset + other.length);}\n",
+          "java_prediction": "public int compareTo(Object other) {BytesRef br = other as BytesRef;assert br != null;return utf8SortedAsUnicodeSortOrder.compare(this, br);}\n",
+          "sentence_bleu": 9.91554192901938
+        },
+        {
+          "cs": "public override WAH8DocIdSet Build(){if (this.wordNum != -1){AddWord(wordNum, (byte)word);}return base.Build();}\n",
+          "java_reference": "public SpanNearQuery build() {return new SpanNearQuery(clauses.toArray(new SpanQuery[clauses.size()]), slop, ordered);}\n",
+          "java_prediction": "public HSSFDocIdSet build() {return new HSSFDocIdSet(this);}\n",
+          "sentence_bleu": 13.903578110411914
+        },
+        {
+          "cs": "public sealed override byte get(){throw new System.NotImplementedException();}\n",
+          "java_reference": "public final byte get() {if (position == limit) {throw new BufferUnderflowException();}return this.block.peekByte(offset + position++);}\n",
+          "java_prediction": "public final byte get() throws IOException {return (byte) get();}\n",
+          "sentence_bleu": 15.221315781523321
+        },
+        {
+          "cs": "public java.lang.StringBuffer append(bool b){return append(b ? \"true\" : \"false\");}\n",
+          "java_reference": "public StringBuffer append(double d) {RealToString.getInstance().appendDouble(this, d);return this;}\n",
+          "java_prediction": "public StringBuffer append(int i) {StringBuilder sb = this.sb;writeInt(i);return sb;}\n",
+          "sentence_bleu": 17.67445234920605
+        }
+      ]
+    },
+    {
+      "name": "codet5-base (fine-tuned)",
+      "model_path": "/content/drive/MyDrive/csharp_to_java_project/fine_tuned_codet5_base",
+      "corpus_bleu": 89.12356050238328,
+      "exact_match": 66.1,
+      "error_categories": {
+        "empty_output": 0,
+        "likely_truncated": 0,
+        "near_miss": 230,
+        "other_mismatch": 109
+      },
+      "worst_examples": [
+        {
+          "cs": "public POIFSFileSystem(){HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList();_root           = null;}\n",
+          "java_reference": "public POIFSFileSystem() {this(true);_header.setBATCount(1);_header.setBATArray(new int[]{1});BATBlock bb = BATBlock.createEmptyBATBlock(bigBlockSize, false);bb.setOurBlockIndex(1);_bat_blocks.add(bb);setNextBlock(0, POIFSConstants.END_OF_CHAIN);setNextBlock(1, POIFSConstants.FAT_SECTOR_BLOCK);_property_table.setStartBlock(0);}\n",
+          "java_prediction": "public POIFSFileSystem() {_headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList<>();_root           = null;}\n",
+          "sentence_bleu": 7.258903316580489
+        },
+        {
+          "cs": "public int CompareTo(object other) {BytesRef br = other as BytesRef;Debug.Assert(br != null);return utf8SortedAsUnicodeSortOrder.Compare(this, br);}\n",
+          "java_reference": "public int compareTo(BytesRef other) {return Arrays.compareUnsigned(this.bytes, this.offset, this.offset + this.length,other.bytes, other.offset, other.offset + other.length);}\n",
+          "java_prediction": "public int compareTo(Object other) {assert other instanceof BytesRef;final BytesRef br = (BytesRef) other;return br.compareTo(this);}\n",
+          "sentence_bleu": 10.06992232082706
+        },
+        {
+          "cs": "public override WAH8DocIdSet Build(){if (this.wordNum != -1){AddWord(wordNum, (byte)word);}return base.Build();}\n",
+          "java_reference": "public SpanNearQuery build() {return new SpanNearQuery(clauses.toArray(new SpanQuery[clauses.size()]), slop, ordered);}\n",
+          "java_prediction": "public RoaringDocIdSet build() {flush();return new RoaringDocIdSet(sets, cardinality);}\n",
+          "sentence_bleu": 12.937447837773718
+        },
+        {
+          "cs": "public override String ToString(){StringBuilder sb = new StringBuilder();sb.Append(GetType().Name).Append(\" [ARRAY]\\n\");sb.Append(\" range=\").Append(Range.ToString()).Append(\"\\n\");sb.Append(\" options=\").Append(HexDump.ShortToHex(_options)).Append(\"\\n\");sb.Append(\" notUsed=\").Append(HexDump.IntToHex(_field3notUsed)).Append(\"\\n\");sb.Append(\" formula:\").Append(\"\\n\");Ptg[] ptgs = _formula.Tokens;for (int i = 0; i < ptgs.Length; i++){Ptg ptg = ptgs[i];sb.Append(ptg.ToString()).Append(ptg.RVAType).Append(\"\\n\");}sb.Append(\"]\");return sb.ToString();}\n",
+          "java_reference": "public String toString() {StringBuilder sb = new StringBuilder();sb.append(getClass().getName()).append(\" [ARRAY]\\n\");sb.append(\" range=\").append(getRange()).append(\"\\n\");sb.append(\" options=\").append(HexDump.shortToHex(_options)).append(\"\\n\");sb.append(\" notUsed=\").append(HexDump.intToHex(_field3notUsed)).append(\"\\n\");sb.append(\" formula:\").append(\"\\n\");Ptg[] ptgs = _formula.getTokens();for (int i = 0; i < ptgs.length; i++) {Ptg ptg = ptgs[i];sb.append(ptg).append(ptg.getRVAType()).append(\"\\n\");}sb.append(\"]\");return sb.toString();}\n",
+          "java_prediction": "public String toString() {return getClass().getName() + \" [ARRAY]\\n\" +\" range=\" + getRange() +\"\\n\" +\" options=\" + HexDump.shortToHex(_options) + \"\\n\" +\" notUsed=\" + HexDump.intToHex(_field3notUsed) + \"\\n\" +\" formula:\" + \"\\n\" +\" formula:\" + \"\\n\" +\" [ARRAY]\\n\";}\n",
+          "sentence_bleu": 15.571793836512134
+        },
+        {
+          "cs": "public sealed override byte get(){throw new System.NotImplementedException();}\n",
+          "java_reference": "public final byte get() {if (position == limit) {throw new BufferUnderflowException();}return this.block.peekByte(offset + position++);}\n",
+          "java_prediction": "public final byte get() throws InterruptedException, ExecutionException {return (byte) read();}\n",
+          "sentence_bleu": 16.665975947156735
+        }
+      ]
+    },
+    {
+      "name": "codet5-small (zero-shot)",
+      "model_path": "Salesforce/codet5-small",
+      "corpus_bleu": 0.029201928458904992,
+      "exact_match": 0.0,
+      "error_categories": {
+        "empty_output": 12,
+        "likely_truncated": 0,
+        "near_miss": 1,
+        "other_mismatch": 987
+      },
+      "worst_examples": [
+        {
+          "cs": "public override void Serialize(ILittleEndianOutput out1){out1.WriteShort(field_1_vcenter);}\n",
+          "java_reference": "public void serialize(LittleEndianOutput out) {out.writeShort(field_1_vcenter);}\n",
+          "java_prediction": "out1",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual void AddAll(NGit.Util.BlockList<T> src){if (src.size == 0){return;}int srcDirIdx = 0;for (; srcDirIdx < src.tailDirIdx; srcDirIdx++){AddAll(src.directory[srcDirIdx], 0, BLOCK_SIZE);}if (src.tailBlkIdx != 0){AddAll(src.tailBlock, 0, src.tailBlkIdx);}}\n",
+          "java_reference": "public void addAll(BlockList<T> src) {if (src.size == 0)return;int srcDirIdx = 0;for (; srcDirIdx < src.tailDirIdx; srcDirIdx++)addAll(src.directory[srcDirIdx], 0, BLOCK_SIZE);if (src.tailBlkIdx != 0)addAll(src.tailBlock, 0, src.tailBlkIdx);}\n",
+          "java_prediction": "public",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public override void WriteByte(byte b){if (outerInstance.upto == outerInstance.blockSize){if (outerInstance.currentBlock != null){outerInstance.blocks.Add(outerInstance.currentBlock);outerInstance.blockEnd.Add(outerInstance.upto);}outerInstance.currentBlock = new byte[outerInstance.blockSize];outerInstance.upto = 0;}outerInstance.currentBlock[outerInstance.upto++] = (byte)b;}\n",
+          "java_reference": "public void writeByte(byte b) {if (upto == blockSize) {if (currentBlock != null) {addBlock(currentBlock);}currentBlock = new byte[blockSize];upto = 0;}currentBlock[upto++] = b;}\n",
+          "java_prediction": "}",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual ObjectId GetObjectId(){return objectId;}\n",
+          "java_reference": "public ObjectId getObjectId() {return objectId;}\n",
+          "java_prediction": "public virtual",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual DeleteDomainEntryResponse DeleteDomainEntry(DeleteDomainEntryRequest request){var options = new InvokeOptions();options.RequestMarshaller = DeleteDomainEntryRequestMarshaller.Instance;options.ResponseUnmarshaller = DeleteDomainEntryResponseUnmarshaller.Instance;return Invoke<DeleteDomainEntryResponse>(request, options);}\n",
+          "java_reference": "public DeleteDomainEntryResult deleteDomainEntry(DeleteDomainEntryRequest request) {request = beforeClientExecution(request);return executeDeleteDomainEntry(request);}\n",
+          "java_prediction": "public",
+          "sentence_bleu": 0.0
+        }
+      ]
+    },
+    {
+      "name": "codet5-base (zero-shot)",
+      "model_path": "Salesforce/codet5-base",
+      "corpus_bleu": 2.0460254186072837,
+      "exact_match": 0.0,
+      "error_categories": {
+        "empty_output": 11,
+        "likely_truncated": 0,
+        "near_miss": 3,
+        "other_mismatch": 986
+      },
+      "worst_examples": [
+        {
+          "cs": "public override void WriteByte(byte b){if (outerInstance.upto == outerInstance.blockSize){if (outerInstance.currentBlock != null){outerInstance.blocks.Add(outerInstance.currentBlock);outerInstance.blockEnd.Add(outerInstance.upto);}outerInstance.currentBlock = new byte[outerInstance.blockSize];outerInstance.upto = 0;}outerInstance.currentBlock[outerInstance.upto++] = (byte)b;}\n",
+          "java_reference": "public void writeByte(byte b) {if (upto == blockSize) {if (currentBlock != null) {addBlock(currentBlock);}currentBlock = new byte[blockSize];upto = 0;}currentBlock[upto++] = b;}\n",
+          "java_prediction": "})",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual ObjectId GetObjectId(){return objectId;}\n",
+          "java_reference": "public ObjectId getObjectId() {return objectId;}\n",
+          "java_prediction": "public",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual DeleteDomainEntryResponse DeleteDomainEntry(DeleteDomainEntryRequest request){var options = new InvokeOptions();options.RequestMarshaller = DeleteDomainEntryRequestMarshaller.Instance;options.ResponseUnmarshaller = DeleteDomainEntryResponseUnmarshaller.Instance;return Invoke<DeleteDomainEntryResponse>(request, options);}\n",
+          "java_reference": "public DeleteDomainEntryResult deleteDomainEntry(DeleteDomainEntryRequest request) {request = beforeClientExecution(request);return executeDeleteDomainEntry(request);}\n",
+          "java_prediction": "public}",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public string GetFullMessage(){byte[] raw = buffer;int msgB = RawParseUtils.TagMessage(raw, 0);if (msgB < 0){return string.Empty;}Encoding enc = RawParseUtils.ParseEncoding(raw);return RawParseUtils.Decode(enc, raw, msgB, raw.Length);}\n",
+          "java_reference": "public final String getFullMessage() {byte[] raw = buffer;int msgB = RawParseUtils.tagMessage(raw, 0);if (msgB < 0) {return \"\"; }return RawParseUtils.decode(guessEncoding(), raw, msgB, raw.length);}\n",
+          "java_prediction": "publicpublicstring}",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public POIFSFileSystem(){HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList();_root           = null;}\n",
+          "java_reference": "public POIFSFileSystem() {this(true);_header.setBATCount(1);_header.setBATArray(new int[]{1});BATBlock bb = BATBlock.createEmptyBATBlock(bigBlockSize, false);bb.setOurBlockIndex(1);_bat_blocks.add(bb);setNextBlock(0, POIFSConstants.END_OF_CHAIN);setNextBlock(1, POIFSConstants.FAT_SECTOR_BLOCK);_property_table.setStartBlock(0);}\n",
+          "java_prediction": " public void}",
+          "sentence_bleu": 0.0
+        }
+      ]
+    }
+  ]
+}

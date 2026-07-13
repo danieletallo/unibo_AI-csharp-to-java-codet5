@@ -1,0 +1,8 @@
+{
+  "source": "Raw stdout printed by Seq2SeqTrainer.train() at the end of Phase B's codet5-base training run (max_length=256). HuggingFace's Trainer logs this summary to the console but does not persist it into trainer_state.json (verified: see trainer_state.json in this same folder, whose log_history has no train_runtime entry). Captured manually from the Colab cell output since it is not written to any file by the training script itself.",
+  "train_runtime": 7177.9507,
+  "train_samples_per_second": 14.349,
+  "train_steps_per_second": 1.794,
+  "train_loss": 0.09371943022153392,
+  "epoch": 10.0
+}
