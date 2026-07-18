@@ -28,7 +28,7 @@ import evaluate
 import torch
 
 from phase_A_preparation.prepare_dataset import load_and_prepare_dataset
-from phase_C_evaluation.evaluate_models import evaluate_model, get_device, load_model_and_tokenizer
+from phase_C_evaluation.evaluate_models import evaluate_model, get_device, load_model_and_tokenizer, normalize_code_text
 
 # Redefined here instead of imported from evaluate_models, since that module
 # has no __main__ guard and importing it would re-run Phase C's evaluation.
@@ -53,6 +53,7 @@ def run_beam_search_comparison():
 
     print("Step 3/3: generating with each beam width...", flush=True)
     results = []
+    beam4_evaluation = None
     for num_beams in BEAM_WIDTHS:
         label = "greedy" if num_beams == 1 else f"beam search (num_beams={num_beams})"
         print(f"[{label}] generating translations for {len(source_texts)} examples...", flush=True)
@@ -71,12 +72,14 @@ def run_beam_search_comparison():
             "exact_match": evaluation["exact_match"],
             "elapsed_seconds": elapsed_seconds,
         })
+        if num_beams == 4:
+            beam4_evaluation = evaluation
 
     del model, tokenizer
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    return results
+    return results, source_texts, reference_texts, beam4_evaluation
 
 
 def print_comparison(results):
@@ -94,11 +97,37 @@ def save_results(results, output_dir):
     print(f"Saved results to {output_path}")
 
 
+def save_predictions(source_texts, reference_texts, beam4_evaluation, output_dir):
+    """Saves one row per test example (input, human reference, model prediction, sentence
+    BLEU, exact match) for the beam=4 decoding, the project's final choice. Lets the
+    dashboard offer a "pick a random test example" browser purely by reading this file --
+    no model, no GPU, no internet needed at presentation time.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, "beam_search_predictions.json")
+    examples = []
+    for index, (cs, java_reference, java_prediction, sentence_bleu) in enumerate(zip(
+        source_texts, reference_texts, beam4_evaluation["predictions"], beam4_evaluation["sentence_bleus"],
+    )):
+        examples.append({
+            "index": index,
+            "cs": cs,
+            "java_reference": java_reference,
+            "java_prediction": java_prediction,
+            "sentence_bleu": sentence_bleu,
+            "exact_match": normalize_code_text(java_prediction) == normalize_code_text(java_reference),
+        })
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump({"model": MODEL_NAME, "num_beams": 4, "examples": examples}, f, indent=2)
+    print(f"Saved {len(examples)} per-example predictions to {output_path}")
+
+
 if __name__ == "__main__":
     try:
-        comparison_results = run_beam_search_comparison()
+        comparison_results, source_texts, reference_texts, beam4_evaluation = run_beam_search_comparison()
         print_comparison(comparison_results)
         save_results(comparison_results, f"{DRIVE_DIR}/phase_C_results")
+        save_predictions(source_texts, reference_texts, beam4_evaluation, f"{DRIVE_DIR}/phase_C_results")
         print("Done.", flush=True)
     except Exception:
         print("Beam search comparison crashed, full traceback below:", file=sys.stderr, flush=True)
