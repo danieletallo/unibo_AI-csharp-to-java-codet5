@@ -21,6 +21,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import json
 import sys
+import time
 import traceback
 
 import evaluate
@@ -55,16 +56,20 @@ def run_beam_search_comparison():
     for num_beams in BEAM_WIDTHS:
         label = "greedy" if num_beams == 1 else f"beam search (num_beams={num_beams})"
         print(f"[{label}] generating translations for {len(source_texts)} examples...", flush=True)
+        start_time = time.time()
         evaluation = evaluate_model(
             MODEL_NAME, model, tokenizer, source_texts, reference_texts, device, bleu_metric,
             num_beams=num_beams,
         )
-        print(f"[{label}] corpus BLEU: {evaluation['corpus_bleu']:.2f}, exact match: {evaluation['exact_match']:.2f}%", flush=True)
+        elapsed_seconds = time.time() - start_time
+        print(f"[{label}] corpus BLEU: {evaluation['corpus_bleu']:.2f}, exact match: {evaluation['exact_match']:.2f}%, "
+              f"took {elapsed_seconds:.1f}s", flush=True)
         results.append({
             "num_beams": num_beams,
             "label": label,
             "corpus_bleu": evaluation["corpus_bleu"],
             "exact_match": evaluation["exact_match"],
+            "elapsed_seconds": elapsed_seconds,
         })
 
     del model, tokenizer
@@ -76,9 +81,9 @@ def run_beam_search_comparison():
 
 def print_comparison(results):
     print("=== Beam search vs greedy, codet5-base (fine-tuned) ===")
-    print(f"{'num_beams':<12}{'corpus BLEU':>15}{'exact match %':>16}")
+    print(f"{'num_beams':<12}{'corpus BLEU':>15}{'exact match %':>16}{'time (s)':>12}")
     for result in results:
-        print(f"{result['num_beams']:<12}{result['corpus_bleu']:>15.2f}{result['exact_match']:>16.2f}")
+        print(f"{result['num_beams']:<12}{result['corpus_bleu']:>15.2f}{result['exact_match']:>16.2f}{result['elapsed_seconds']:>12.1f}")
 
 
 def save_results(results, output_dir):
