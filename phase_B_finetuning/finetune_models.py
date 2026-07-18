@@ -1,10 +1,12 @@
 """
 Phase B -- Model fine-tuning.
 
-Loads pretrained tokenizers and models (Salesforce/codet5-small and
-Salesforce/codet5-base), tokenizes the dataset prepared in Phase A with
-preprocess_function, and fine-tunes both models on the training set,
-using the validation set to select the best checkpoint.
+Loads pretrained tokenizers and models (Salesforce/codet5-small,
+Salesforce/codet5-base, and vanilla t5-base as a non-code-pretrained
+baseline, referred to as t5vanilla throughout), tokenizes the dataset
+prepared in Phase A with preprocess_function, and fine-tunes all three
+models on the training set, using the validation set to select the
+best checkpoint.
 Records the training parameters used (learning rate, batch size, number
 of epochs, maximum length).
 """
@@ -31,10 +33,18 @@ model_small = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
 tokenizer_base = AutoTokenizer.from_pretrained("Salesforce/codet5-base")
 model_base = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-base")
 
+# t5vanilla: same size as codet5-base (t5-base, ~220M params) but pretrained
+# only on generic text (C4), not on code. Kept at the same size as
+# codet5-base on purpose, so the only variable that changes between the two
+# is the pretraining corpus, not the parameter count.
+tokenizer_t5vanilla = AutoTokenizer.from_pretrained("t5-base")
+model_t5vanilla = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
+
 prepared_dataset = load_and_prepare_dataset()
 
 tokenized_small = prepared_dataset.map(preprocess_function, fn_kwargs={"tokenizer": tokenizer_small}, batched=True)
 tokenized_base = prepared_dataset.map(preprocess_function, fn_kwargs={"tokenizer": tokenizer_base}, batched=True)
+tokenized_t5vanilla = prepared_dataset.map(preprocess_function, fn_kwargs={"tokenizer": tokenizer_t5vanilla}, batched=True)
 
 
 def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
@@ -76,6 +86,7 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
 
 trainer_small, training_args_small = build_trainer(model_small, tokenizer_small, tokenized_small, f"{DRIVE_DIR}/results_codet5_small")
 trainer_base, training_args_base = build_trainer(model_base, tokenizer_base, tokenized_base, f"{DRIVE_DIR}/results_codet5_base")
+trainer_t5vanilla, training_args_t5vanilla = build_trainer(model_t5vanilla, tokenizer_t5vanilla, tokenized_t5vanilla, f"{DRIVE_DIR}/results_t5vanilla")
 
 # Each model is trained, saved, and cleared from GPU memory before the next
 # one starts -- otherwise codet5-small's memory stays reserved and
@@ -96,7 +107,15 @@ tokenizer_base.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_base")
 del trainer_base, model_base
 torch.cuda.empty_cache()
 
-print("Training parameters used (identical for both models):")
+print("Training t5vanilla...")
+trainer_t5vanilla.train()
+trainer_t5vanilla.save_model(f"{DRIVE_DIR}/fine_tuned_t5vanilla")
+tokenizer_t5vanilla.save_pretrained(f"{DRIVE_DIR}/fine_tuned_t5vanilla")
+
+del trainer_t5vanilla, model_t5vanilla
+torch.cuda.empty_cache()
+
+print("Training parameters used (identical for all three models):")
 print(f"  learning_rate: {training_args_small.learning_rate}")
 print(f"  per_device_train_batch_size: {training_args_small.per_device_train_batch_size}")
 print(f"  num_train_epochs: {training_args_small.num_train_epochs}")

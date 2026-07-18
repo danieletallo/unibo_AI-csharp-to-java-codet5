@@ -1,11 +1,13 @@
 """
 Phase C -- Model evaluation.
 
-Generates the Java translation for the test set examples with both
-models fine-tuned in Phase B, evaluates performance with appropriate
-metrics (BLEU, possibly Exact Match), analyzes some recurring errors,
-and compares the two models, highlighting their strengths and
-weaknesses.
+Generates the Java translation for the test set examples with the
+models fine-tuned in Phase B (codet5-small, codet5-base, and
+t5vanilla, a vanilla t5-base used as a non-code-pretrained baseline,
+matched in size to codet5-base), evaluates performance with
+appropriate metrics (BLEU, possibly Exact Match), analyzes some
+recurring errors, and compares the models, highlighting their
+strengths and weaknesses.
 
 Also compares each fine-tuned model against its own zero-shot baseline
 (the same pretrained checkpoint, without any fine-tuning), to check
@@ -41,6 +43,8 @@ MODEL_CONFIGS = [
     {"name": "codet5-base (fine-tuned)", "model_path": f"{DRIVE_DIR}/fine_tuned_codet5_base", "family": "base", "is_finetuned": True},
     {"name": "codet5-small (zero-shot)", "model_path": "Salesforce/codet5-small", "family": "small", "is_finetuned": False},
     {"name": "codet5-base (zero-shot)", "model_path": "Salesforce/codet5-base", "family": "base", "is_finetuned": False},
+    {"name": "t5vanilla (fine-tuned)", "model_path": f"{DRIVE_DIR}/fine_tuned_t5vanilla", "family": "t5vanilla", "is_finetuned": True},
+    {"name": "t5vanilla (zero-shot)", "model_path": "t5-base", "family": "t5vanilla", "is_finetuned": False},
 ]
 
 
