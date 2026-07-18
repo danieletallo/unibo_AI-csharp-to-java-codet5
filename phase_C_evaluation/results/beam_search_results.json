@@ -1,0 +1,20 @@
+{
+  "model": "codet5-base (fine-tuned)",
+  "model_path": "/content/drive/MyDrive/csharp_to_java_project/fine_tuned_codet5_base",
+  "results": [
+    {
+      "num_beams": 1,
+      "label": "greedy",
+      "corpus_bleu": 89.12356050238328,
+      "exact_match": 66.1,
+      "elapsed_seconds": 292.89707589149475
+    },
+    {
+      "num_beams": 4,
+      "label": "beam search (num_beams=4)",
+      "corpus_bleu": 89.80900292107141,
+      "exact_match": 66.6,
+      "elapsed_seconds": 384.16101813316345
+    }
+  ]
+}

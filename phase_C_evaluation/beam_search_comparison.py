@@ -1,5 +1,5 @@
 """
-Phase C extra -- Beam search vs greedy decoding, for the chosen model only.
+Phase C extra: Beam search vs greedy decoding, for the chosen model only.
 
 Compares greedy decoding (num_beams=1) against beam search (num_beams=4) on
 codet5-base (fine-tuned): the model the project actually goes with. Beam
@@ -13,7 +13,7 @@ Saved as its own JSON file, separate from metrics.json.
 
 import os
 
-# Disables TensorFlow auto-detection in transformers -- see Phase C for the
+# Disables TensorFlow auto-detection in transformers: see Phase C for the
 # torch/torchvision conflict this avoids on Colab.
 os.environ["USE_TF"] = "0"
 os.environ["TRANSFORMERS_NO_TF"] = "1"
@@ -100,7 +100,7 @@ def save_results(results, output_dir):
 def save_predictions(source_texts, reference_texts, beam4_evaluation, output_dir):
     """Saves one row per test example (input, human reference, model prediction, sentence
     BLEU, exact match) for the beam=4 decoding, the project's final choice. Lets the
-    dashboard offer a "pick a random test example" browser purely by reading this file --
+    dashboard offer a "pick a random test example" browser purely by reading this file:
     no model, no GPU, no internet needed at presentation time.
     """
     os.makedirs(output_dir, exist_ok=True)
