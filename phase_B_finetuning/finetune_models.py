@@ -8,8 +8,20 @@ prepared in Phase A with preprocess_function, and fine-tunes all three
 models on the training set, using the validation set to select the
 best checkpoint.
 Records the training parameters used (learning rate, batch size, number
-of epochs, maximum length).
+of epochs, maximum length), and the training-time/compute metrics
+(train_runtime, total_flos, ...) returned by each Trainer.train() call.
 """
+
+import os
+
+# Useful for running in Colab, where TensorFlow is installed by default and
+# can conflict with PyTorch. Disables TF and its logging, so only PyTorch
+# and Hugging Face Transformers are used.
+os.environ["USE_TF"] = "0"
+os.environ["TRANSFORMERS_NO_TF"] = "1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+import json
 
 import torch
 from transformers import (
@@ -84,6 +96,14 @@ def build_trainer(model, tokenizer, tokenized_dataset, output_dir):
     return trainer, training_args
 
 
+def save_train_metrics(train_result, output_dir):
+    """Saves the metrics dict returned by trainer.train() (train_runtime, total_flos, ...) as JSON."""
+    output_path = f"{output_dir}/train_metrics.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(train_result.metrics, f, indent=2)
+    print(f"Saved training metrics to {output_path}")
+
+
 trainer_small, training_args_small = build_trainer(model_small, tokenizer_small, tokenized_small, f"{DRIVE_DIR}/results_codet5_small")
 trainer_base, training_args_base = build_trainer(model_base, tokenizer_base, tokenized_base, f"{DRIVE_DIR}/results_codet5_base")
 trainer_t5vanilla, training_args_t5vanilla = build_trainer(model_t5vanilla, tokenizer_t5vanilla, tokenized_t5vanilla, f"{DRIVE_DIR}/results_t5vanilla")
@@ -92,25 +112,28 @@ trainer_t5vanilla, training_args_t5vanilla = build_trainer(model_t5vanilla, toke
 # one starts -- otherwise codet5-small's memory stays reserved and
 # codet5-base (much bigger) runs out of room on top of it.
 print("Training codet5-small...")
-trainer_small.train()
+train_result_small = trainer_small.train()
 trainer_small.save_model(f"{DRIVE_DIR}/fine_tuned_codet5_small")
 tokenizer_small.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_small")
+save_train_metrics(train_result_small, f"{DRIVE_DIR}/fine_tuned_codet5_small")
 
 del trainer_small, model_small
 torch.cuda.empty_cache()
 
 print("Training codet5-base...")
-trainer_base.train()
+train_result_base = trainer_base.train()
 trainer_base.save_model(f"{DRIVE_DIR}/fine_tuned_codet5_base")
 tokenizer_base.save_pretrained(f"{DRIVE_DIR}/fine_tuned_codet5_base")
+save_train_metrics(train_result_base, f"{DRIVE_DIR}/fine_tuned_codet5_base")
 
 del trainer_base, model_base
 torch.cuda.empty_cache()
 
 print("Training t5vanilla...")
-trainer_t5vanilla.train()
+train_result_t5vanilla = trainer_t5vanilla.train()
 trainer_t5vanilla.save_model(f"{DRIVE_DIR}/fine_tuned_t5vanilla")
 tokenizer_t5vanilla.save_pretrained(f"{DRIVE_DIR}/fine_tuned_t5vanilla")
+save_train_metrics(train_result_t5vanilla, f"{DRIVE_DIR}/fine_tuned_t5vanilla")
 
 del trainer_t5vanilla, model_t5vanilla
 torch.cuda.empty_cache()
