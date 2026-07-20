@@ -1,16 +1,16 @@
 {
-  "best_finetuned_model": "codet5-small (fine-tuned)",
+  "best_finetuned_model": "codet5-base (fine-tuned)",
   "models": [
     {
       "name": "codet5-small (fine-tuned)",
       "model_path": "/content/drive/MyDrive/csharp_to_java_project/fine_tuned_codet5_small",
-      "corpus_bleu": 89.48633394065834,
-      "exact_match": 64.7,
+      "corpus_bleu": 89.033846792989,
+      "exact_match": 64.8,
       "error_categories": {
         "empty_output": 0,
         "likely_truncated": 0,
-        "near_miss": 244,
-        "other_mismatch": 109
+        "near_miss": 241,
+        "other_mismatch": 111
       },
       "worst_examples": [
         {
@@ -22,8 +22,14 @@
         {
           "cs": "public int CompareTo(object other) {BytesRef br = other as BytesRef;Debug.Assert(br != null);return utf8SortedAsUnicodeSortOrder.Compare(this, br);}\n",
           "java_reference": "public int compareTo(BytesRef other) {return Arrays.compareUnsigned(this.bytes, this.offset, this.offset + this.length,other.bytes, other.offset, other.offset + other.length);}\n",
-          "java_prediction": "public int compareTo(Object other) {BytesRef br = other as BytesRef;assert br != null;return utf8SortedAsUnicodeSortOrder.compare(this, br);}\n",
-          "sentence_bleu": 9.91554192901938
+          "java_prediction": "public int compareTo(Object other) {assert other instanceof BytesRef;final BytesRef br = (BytesRef) other;assert br != null;return UTF8SortedAsUnicodeSortOrder.compare(this, br);}\n",
+          "sentence_bleu": 10.964014387719345
+        },
+        {
+          "cs": "public long RamBytesUsed(){return RamUsageEstimator.AlignObjectSize(3 * RamUsageEstimator.NUM_BYTES_OBJECT_REF + 2 * RamUsageEstimator.NUM_BYTES_INT32)+ RamUsageEstimator.SizeOf(data)+ positions.RamBytesUsed()+ wordNums.RamBytesUsed();}\n",
+          "java_reference": "public long ramBytesUsed() {return values.ramBytesUsed()+ super.ramBytesUsed()+ Long.BYTES+ RamUsageEstimator.NUM_BYTES_OBJECT_REF;}\n",
+          "java_prediction": "public long ramBytesUsed() {return super.ramBytesUsed()+ positions.ramBytesUsed()+ wordNums.ramBytesUsed()+ wordNums.ramBytesUsed()+ positions.ramBytesUsed()+ positions.ramBytesUsed()+ wordNums.ramBytesUsed()+ positions.ramBytesUsed()+ positions.ramBytesUsed()+ positions.ramBytesUsed()+ wordNums.ramBytesUsed()+ positions.ramBytesUsed()+ positions.ramBytesUsed()+ positions.ramBytesUsed()+ positions.ramBytesUsed()+ wordNums.ramBytesUsed()+ positions.ramBytesUsed()+ wordNums.ramBytesUsed();}\n",
+          "sentence_bleu": 12.331988539179275
         },
         {
           "cs": "public override WAH8DocIdSet Build(){if (this.wordNum != -1){AddWord(wordNum, (byte)word);}return base.Build();}\n",
@@ -32,60 +38,54 @@
           "sentence_bleu": 13.903578110411914
         },
         {
-          "cs": "public sealed override byte get(){throw new System.NotImplementedException();}\n",
-          "java_reference": "public final byte get() {if (position == limit) {throw new BufferUnderflowException();}return this.block.peekByte(offset + position++);}\n",
-          "java_prediction": "public final byte get() throws IOException {return (byte) get();}\n",
-          "sentence_bleu": 15.221315781523321
-        },
-        {
           "cs": "public java.lang.StringBuffer append(bool b){return append(b ? \"true\" : \"false\");}\n",
           "java_reference": "public StringBuffer append(double d) {RealToString.getInstance().appendDouble(this, d);return this;}\n",
-          "java_prediction": "public StringBuffer append(int i) {StringBuilder sb = this.sb;writeInt(i);return sb;}\n",
-          "sentence_bleu": 17.67445234920605
+          "java_prediction": "public StringBuffer append(int i) {return append(i ? \"true\" : \"false\");}\n",
+          "sentence_bleu": 14.472007983645113
         }
       ]
     },
     {
       "name": "codet5-base (fine-tuned)",
       "model_path": "/content/drive/MyDrive/csharp_to_java_project/fine_tuned_codet5_base",
-      "corpus_bleu": 89.12356050238328,
-      "exact_match": 66.1,
+      "corpus_bleu": 89.49345483645341,
+      "exact_match": 64.2,
       "error_categories": {
         "empty_output": 0,
         "likely_truncated": 0,
-        "near_miss": 230,
-        "other_mismatch": 109
+        "near_miss": 248,
+        "other_mismatch": 110
       },
       "worst_examples": [
         {
+          "cs": "public override int FillFields(byte[] data, int offset, IEscherRecordFactory recordFactory){int bytesRemaining = ReadHeader(data, offset);int pos = offset + 8;int size = 0;field_1_rectX1 = LittleEndian.GetInt(data, pos + size); size += 4;field_2_rectY1 = LittleEndian.GetInt(data, pos + size); size += 4;field_3_rectX2 = LittleEndian.GetInt(data, pos + size); size += 4;field_4_rectY2 = LittleEndian.GetInt(data, pos + size); size += 4;bytesRemaining -= size;if (bytesRemaining != 0) throw new RecordFormatException(\"Expected no remaining bytes but got \" + bytesRemaining);return 8 + size + bytesRemaining;}\n",
+          "java_reference": "public int fillFields(byte[] data, int offset, EscherRecordFactory recordFactory) {int bytesRemaining = readHeader( data, offset );int pos            = offset + 8;int size           = 0;field_1_rectX1 =  LittleEndian.getInt( data, pos + size );size+=4;field_2_rectY1 =  LittleEndian.getInt( data, pos + size );size+=4;field_3_rectX2 =  LittleEndian.getInt( data, pos + size );size+=4;field_4_rectY2 =  LittleEndian.getInt( data, pos + size );size+=4;bytesRemaining -= size;if (bytesRemaining != 0) {throw new RecordFormatException(\"Expected no remaining bytes but got \" + bytesRemaining);}return 8 + size + bytesRemaining;}\n",
+          "java_prediction": "public int fillFields(byte[] data, int offset, EscherRecordFactory recordFactory) {int bytesRemaining = readHeader( data, offset );int pos           = offset + 8;int size           = 0;field_1_rectX1  =                                                                                                                                                                        ",
+          "sentence_bleu": 6.539740322986024
+        },
+        {
           "cs": "public POIFSFileSystem(){HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList();_root           = null;}\n",
           "java_reference": "public POIFSFileSystem() {this(true);_header.setBATCount(1);_header.setBATArray(new int[]{1});BATBlock bb = BATBlock.createEmptyBATBlock(bigBlockSize, false);bb.setOurBlockIndex(1);_bat_blocks.add(bb);setNextBlock(0, POIFSConstants.END_OF_CHAIN);setNextBlock(1, POIFSConstants.FAT_SECTOR_BLOCK);_property_table.setStartBlock(0);}\n",
-          "java_prediction": "public POIFSFileSystem() {_headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList<>();_root           = null;}\n",
-          "sentence_bleu": 7.258903316580489
+          "java_prediction": "public POIFSFileSystem() {HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList<>();_root           = null;}\n",
+          "sentence_bleu": 7.188076278701446
         },
         {
           "cs": "public int CompareTo(object other) {BytesRef br = other as BytesRef;Debug.Assert(br != null);return utf8SortedAsUnicodeSortOrder.Compare(this, br);}\n",
           "java_reference": "public int compareTo(BytesRef other) {return Arrays.compareUnsigned(this.bytes, this.offset, this.offset + this.length,other.bytes, other.offset, other.offset + other.length);}\n",
-          "java_prediction": "public int compareTo(Object other) {assert other instanceof BytesRef;final BytesRef br = (BytesRef) other;return br.compareTo(this);}\n",
-          "sentence_bleu": 10.06992232082706
+          "java_prediction": "public int compareTo(Object other) {assert other instanceof BytesRef;final BytesRef br = (BytesRef) other;assert br != null;return utf8SortedAsUnicodeSortOrder.compare(this, br);}\n",
+          "sentence_bleu": 10.964014387719345
         },
         {
           "cs": "public override WAH8DocIdSet Build(){if (this.wordNum != -1){AddWord(wordNum, (byte)word);}return base.Build();}\n",
           "java_reference": "public SpanNearQuery build() {return new SpanNearQuery(clauses.toArray(new SpanQuery[clauses.size()]), slop, ordered);}\n",
-          "java_prediction": "public RoaringDocIdSet build() {flush();return new RoaringDocIdSet(sets, cardinality);}\n",
-          "sentence_bleu": 12.937447837773718
+          "java_prediction": "public WAH8DocIdSet build() {return new WAH8DocIdSet(this);}\n",
+          "sentence_bleu": 13.903578110411914
         },
         {
-          "cs": "public override String ToString(){StringBuilder sb = new StringBuilder();sb.Append(GetType().Name).Append(\" [ARRAY]\\n\");sb.Append(\" range=\").Append(Range.ToString()).Append(\"\\n\");sb.Append(\" options=\").Append(HexDump.ShortToHex(_options)).Append(\"\\n\");sb.Append(\" notUsed=\").Append(HexDump.IntToHex(_field3notUsed)).Append(\"\\n\");sb.Append(\" formula:\").Append(\"\\n\");Ptg[] ptgs = _formula.Tokens;for (int i = 0; i < ptgs.Length; i++){Ptg ptg = ptgs[i];sb.Append(ptg.ToString()).Append(ptg.RVAType).Append(\"\\n\");}sb.Append(\"]\");return sb.ToString();}\n",
-          "java_reference": "public String toString() {StringBuilder sb = new StringBuilder();sb.append(getClass().getName()).append(\" [ARRAY]\\n\");sb.append(\" range=\").append(getRange()).append(\"\\n\");sb.append(\" options=\").append(HexDump.shortToHex(_options)).append(\"\\n\");sb.append(\" notUsed=\").append(HexDump.intToHex(_field3notUsed)).append(\"\\n\");sb.append(\" formula:\").append(\"\\n\");Ptg[] ptgs = _formula.getTokens();for (int i = 0; i < ptgs.length; i++) {Ptg ptg = ptgs[i];sb.append(ptg).append(ptg.getRVAType()).append(\"\\n\");}sb.append(\"]\");return sb.toString();}\n",
-          "java_prediction": "public String toString() {return getClass().getName() + \" [ARRAY]\\n\" +\" range=\" + getRange() +\"\\n\" +\" options=\" + HexDump.shortToHex(_options) + \"\\n\" +\" notUsed=\" + HexDump.intToHex(_field3notUsed) + \"\\n\" +\" formula:\" + \"\\n\" +\" formula:\" + \"\\n\" +\" [ARRAY]\\n\";}\n",
-          "sentence_bleu": 15.571793836512134
-        },
-        {
-          "cs": "public sealed override byte get(){throw new System.NotImplementedException();}\n",
-          "java_reference": "public final byte get() {if (position == limit) {throw new BufferUnderflowException();}return this.block.peekByte(offset + position++);}\n",
-          "java_prediction": "public final byte get() throws InterruptedException, ExecutionException {return (byte) read();}\n",
-          "sentence_bleu": 16.665975947156735
+          "cs": "public static string ToHex(int value){return ToHex((long)value, 8);}\n",
+          "java_reference": "public static String toHex(long value) {StringBuilder sb = new StringBuilder(16);writeHex(sb, value, 16, \"\");return sb.toString();}\n",
+          "java_prediction": "public static String toHex(String value) {return (value == null || value.length() == 0)? \"[]\": toHex(value.getBytes(LocaleUtil.CHARSET_1252));}\n",
+          "sentence_bleu": 14.66513541736557
         }
       ]
     },
@@ -174,6 +174,94 @@
           "java_reference": "public POIFSFileSystem() {this(true);_header.setBATCount(1);_header.setBATArray(new int[]{1});BATBlock bb = BATBlock.createEmptyBATBlock(bigBlockSize, false);bb.setOurBlockIndex(1);_bat_blocks.add(bb);setNextBlock(0, POIFSConstants.END_OF_CHAIN);setNextBlock(1, POIFSConstants.FAT_SECTOR_BLOCK);_property_table.setStartBlock(0);}\n",
           "java_prediction": " public void}",
           "sentence_bleu": 0.0
+        }
+      ]
+    },
+    {
+      "name": "t5vanilla (fine-tuned)",
+      "model_path": "/content/drive/MyDrive/csharp_to_java_project/fine_tuned_t5vanilla",
+      "corpus_bleu": 70.46399985302777,
+      "exact_match": 0.0,
+      "error_categories": {
+        "empty_output": 0,
+        "likely_truncated": 0,
+        "near_miss": 648,
+        "other_mismatch": 352
+      },
+      "worst_examples": [
+        {
+          "cs": "public override WAH8DocIdSet Build(){if (this.wordNum != -1){AddWord(wordNum, (byte)word);}return base.Build();}\n",
+          "java_reference": "public SpanNearQuery build() {return new SpanNearQuery(clauses.toArray(new SpanQuery[clauses.size()]), slop, ordered);}\n",
+          "java_prediction": "public QueryBuilder build() return new QueryBuilder();",
+          "sentence_bleu": 3.7474686069947096
+        },
+        {
+          "cs": "public POIFSFileSystem(){HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents      = new ArrayList();_root           = null;}\n",
+          "java_reference": "public POIFSFileSystem() {this(true);_header.setBATCount(1);_header.setBATArray(new int[]{1});BATBlock bb = BATBlock.createEmptyBATBlock(bigBlockSize, false);bb.setOurBlockIndex(1);_bat_blocks.add(bb);setNextBlock(0, POIFSConstants.END_OF_CHAIN);setNextBlock(1, POIFSConstants.FAT_SECTOR_BLOCK);_property_table.setStartBlock(0);}\n",
+          "java_prediction": "public POIFSFileSystem() HeaderBlock headerBlock = new HeaderBlock(bigBlockSize);_property_table = new PropertyTable(headerBlock);_documents = new ArrayList>();_root = null;",
+          "sentence_bleu": 5.589696087612201
+        },
+        {
+          "cs": "public int CompareTo(object other) {BytesRef br = other as BytesRef;Debug.Assert(br != null);return utf8SortedAsUnicodeSortOrder.Compare(this, br);}\n",
+          "java_reference": "public int compareTo(BytesRef other) {return Arrays.compareUnsigned(this.bytes, this.offset, this.offset + this.length,other.bytes, other.offset, other.offset + other.length);}\n",
+          "java_prediction": "public int compareTo(Object other) BytesRef br = other as BytesRef;assert br != null;return utf8SortedAsUnicodeSortOrder.compare(this, br);",
+          "sentence_bleu": 7.298063836415617
+        },
+        {
+          "cs": "public ICollection NameSet(){return dictionaryNameToID.Keys;}\n",
+          "java_reference": "public Set<String> nameSet() {return Collections.unmodifiableSet(dictionary.values());}\n",
+          "java_prediction": "public Collection nameSet() return dictionaryNameToID.keySet();",
+          "sentence_bleu": 8.57436462330921
+        },
+        {
+          "cs": "public override string ToString(){StringBuilder r = new StringBuilder();r.Append(\"BlameResult: \");r.Append(GetResultPath());return r.ToString();}\n",
+          "java_reference": "public String toString() {StringBuilder r = new StringBuilder();r.append(\"BlameResult: \"); r.append(getResultPath());return r.toString();}\n",
+          "java_prediction": "public String toString() return getResultPath() + \"BlameResult: \" +\";",
+          "sentence_bleu": 10.879078020391805
+        }
+      ]
+    },
+    {
+      "name": "t5vanilla (zero-shot)",
+      "model_path": "t5-base",
+      "corpus_bleu": 16.497138777320053,
+      "exact_match": 0.0,
+      "error_categories": {
+        "empty_output": 0,
+        "likely_truncated": 0,
+        "near_miss": 0,
+        "other_mismatch": 1000
+      },
+      "worst_examples": [
+        {
+          "cs": "public bool ProcessMatch(ValueEval eval){if (eval is NumericValueEval){if (minimumValue == null){ minimumValue = eval;}else{ double currentValue = ((NumericValueEval)eval).NumberValue;double oldValue = ((NumericValueEval)minimumValue).NumberValue;if (currentValue < oldValue){minimumValue = eval;}}}return true;}\n",
+          "java_reference": "public boolean processMatch(ValueEval eval) {if(eval instanceof NumericValueEval) {if(minimumValue == null) { minimumValue = eval;} else { double currentValue = ((NumericValueEval)eval).getNumberValue();double oldValue = ((NumericValueEval)minimumValue).getNumberValue();if(currentValue < oldValue) {minimumValue = eval;}}}return true;}\n",
+          "java_prediction": "null;nullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnullnulln",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual ListComponentsResponse ListComponents(ListComponentsRequest request){var options = new InvokeOptions();options.RequestMarshaller = ListComponentsRequestMarshaller.Instance;options.ResponseUnmarshaller = ListComponentsResponseUnmarshaller.Instance;return Invoke<ListComponentsResponse>(request, options);}\n",
+          "java_reference": "public ListComponentsResult listComponents(ListComponentsRequest request) {request = beforeClientExecution(request);return executeListComponents(request);}\n",
+          "java_prediction": "ListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponentsResponseListComponents",
+          "sentence_bleu": 0.0
+        },
+        {
+          "cs": "public virtual string GetHumanishName(){if (string.Empty.Equals(GetPath()) || GetPath() == null){throw new ArgumentException();}string s = GetPath();string[] elements;if (\"file\".Equals(scheme) || LOCAL_FILE.Matcher(s).Matches()){elements = s.Split(\"[\\\\\" + FilePath.separatorChar + \"/]\");}else{elements = s.Split(\"/\");}if (elements.Length == 0){throw new ArgumentException();}string result = elements[elements.Length - 1];if (Constants.DOT_GIT.Equals(result)){result = elements[elements.Length - 2];}else{if (result.EndsWith(Constants.DOT_GIT_EXT)){result = Sharpen.Runtime.Substring(result, 0, result.Length - Constants.DOT_GIT_EXT.Length);}}return result;}\n",
+          "java_reference": "public String getHumanishName() throws IllegalArgumentException {String s = getPath();if (\"/\".equals(s) || \"\".equals(s)) s = getHost();if (s == null) throw new IllegalArgumentException();String[] elements;if (\"file\".equals(scheme) || LOCAL_FILE.matcher(s).matches()) elements = s.split(\"[\\\\\" + File.separatorChar + \"/]\"); elseelements = s.split(\"/+\"); if (elements.length == 0)throw new IllegalArgumentException();String result = elements[elements.length - 1];if (Constants.DOT_GIT.equals(result))result = elements[elements.length - 2];else if (result.endsWith(Constants.DOT_GIT_EXT))result = result.substring(0, result.length()- Constants.DOT_GIT_EXT.length());return result;}\n",
+          "java_prediction": "= 0;elseelements = s.Split(\"[\" + FilePath.separatorChar + \"/]\");elseelements = s.Split(\"/\");elseelseelseelseelseelseelseelseelseelseelseelseelseelseelseelseelse",
+          "sentence_bleu": 0.3164935236919246
+        },
+        {
+          "cs": "public virtual WorkingTreeIterator.MetadataDiff CompareMetadata(DirCacheEntry entry){if (entry.IsAssumeValid){return WorkingTreeIterator.MetadataDiff.EQUAL;}if (entry.IsUpdateNeeded){return WorkingTreeIterator.MetadataDiff.DIFFER_BY_METADATA;}if (!entry.IsSmudged && entry.Length != (int)GetEntryLength()){return WorkingTreeIterator.MetadataDiff.DIFFER_BY_METADATA;}if (IsModeDifferent(entry.RawMode)){return WorkingTreeIterator.MetadataDiff.DIFFER_BY_METADATA;}long cacheLastModified = entry.LastModified;long fileLastModified = GetEntryLastModified();if (cacheLastModified % 1000 == 0 || fileLastModified % 1000 == 0){cacheLastModified = cacheLastModified - cacheLastModified % 1000;fileLastModified = fileLastModified - fileLastModified % 1000;}if (fileLastModified != cacheLastModified){return WorkingTreeIterator.MetadataDiff.DIFFER_BY_TIMESTAMP;}else{if (!entry.IsSmudged){return WorkingTreeIterator.MetadataDiff.EQUAL;}else{return WorkingTreeIterator.MetadataDiff.SMUDGED;}}}\n",
+          "java_reference": "public MetadataDiff compareMetadata(DirCacheEntry entry) {if (entry.isAssumeValid())return MetadataDiff.EQUAL;if (entry.isUpdateNeeded())return MetadataDiff.DIFFER_BY_METADATA;if (isModeDifferent(entry.getRawMode()))return MetadataDiff.DIFFER_BY_METADATA;int type = mode & FileMode.TYPE_MASK;if (type == FileMode.TYPE_TREE || type == FileMode.TYPE_GITLINK)return MetadataDiff.EQUAL;if (!entry.isSmudged() && entry.getLength() != (int) getEntryLength())return MetadataDiff.DIFFER_BY_METADATA;Instant cacheLastModified = entry.getLastModifiedInstant();Instant fileLastModified = getEntryLastModifiedInstant();if (timestampComparator.compare(cacheLastModified, fileLastModified,getOptions().getCheckStat() == CheckStat.MINIMAL) != 0) {return MetadataDiff.DIFFER_BY_TIMESTAMP;}if (entry.isSmudged()) {return MetadataDiff.SMUDGED;}return MetadataDiff.EQUAL;}\n",
+          "java_prediction": "if (entry.IsUpdateNeeded)return PublicVirtualWorkingTreeIterator.MetadataDiff CompareMetadata(DirCacheEntry entry)if (entry.IsUpdateNeeded)return WorkingTreeIterator.MetadataDiff CompareMetadata(DirCacheEntry entry)if (entry.IsUpdateNeeded)return WorkingT",
+          "sentence_bleu": 0.3873187189265286
+        },
+        {
+          "cs": "public PositiveScoresOnlyCollector(ICollector c){this.c = c;}\n",
+          "java_reference": "public PositiveScoresOnlyCollector(Collector in) {super(in);}\n",
+          "java_prediction": "this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;this.c = c;",
+          "sentence_bleu": 0.4285889246676481
         }
       ]
     }

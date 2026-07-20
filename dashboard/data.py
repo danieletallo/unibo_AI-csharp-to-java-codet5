@@ -17,9 +17,14 @@ METRICS_C_PATH = os.path.join(REPO_ROOT, "phase_C_evaluation", "results", "metri
 ABLATION_D_PATH = os.path.join(REPO_ROOT, "phase_D_ablation", "results", "ablation_results.json")
 BEAM_SEARCH_PATH = os.path.join(REPO_ROOT, "phase_C_evaluation", "results", "beam_search_results.json")
 BEAM_SEARCH_PREDICTIONS_PATH = os.path.join(REPO_ROOT, "phase_C_evaluation", "results", "beam_search_predictions.json")
+TRAIN_METRICS_DIR = os.path.join(REPO_ROOT, "phase_B_finetuning", "results")
 
 PHASE_A = {"train": 10300, "validation": 500, "test": 1000}
 PHASE_B = {"learning_rate": "5e-5", "batch_size": 8, "epochs": 10, "max_length": 256}
+
+# Maps each model family to the file suffix used for its Phase B artifacts
+# (train_metrics_<suffix>.json, trainer_state_<suffix>.json).
+TRAIN_ARTIFACT_SUFFIX = {"small": "codet5_small", "base": "codet5_base", "t5vanilla": "t5vanilla"}
 
 
 def load_phase_c():
@@ -42,8 +47,45 @@ def load_phase_c():
                 "zero_shot": by_name["codet5-base (zero-shot)"],
                 "fine_tuned": by_name["codet5-base (fine-tuned)"],
             },
+            {
+                "key": "t5vanilla",
+                "label": "t5vanilla",
+                "zero_shot": by_name["t5vanilla (zero-shot)"],
+                "fine_tuned": by_name["t5vanilla (fine-tuned)"],
+            },
         ],
     }
+
+
+def load_phase_b_training():
+    """Per-model training cost (Phase B): wall-clock train_runtime and total_flos,
+    read from the train_metrics_<family>.json files saved by finetune_models.py
+    (the Trainer.train() return value, not recomputed here).
+    """
+    training = {}
+    for family, suffix in TRAIN_ARTIFACT_SUFFIX.items():
+        path = os.path.join(TRAIN_METRICS_DIR, f"train_metrics_{suffix}.json")
+        with open(path, "r", encoding="utf-8") as f:
+            training[family] = json.load(f)
+    return training
+
+
+def load_pretraining_loss_curves():
+    """Per-model validation-loss curve (Phase B): one point per epoch, extracted from
+    the trainer_state_<family>.json log_history (the same file the Trainer saves on
+    its own; only the entries carrying an eval_loss are kept here).
+    """
+    curves = {}
+    for family, suffix in TRAIN_ARTIFACT_SUFFIX.items():
+        path = os.path.join(TRAIN_METRICS_DIR, f"trainer_state_{suffix}.json")
+        with open(path, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        curves[family] = [
+            {"epoch": entry["epoch"], "eval_loss": entry["eval_loss"]}
+            for entry in state["log_history"]
+            if "eval_loss" in entry
+        ]
+    return curves
 
 
 def load_phase_d():

@@ -15,27 +15,50 @@ import random
 
 import gradio as gr
 
-from data import PHASE_A, PHASE_B, load_phase_c, load_phase_d, load_beam_search, load_beam_search_predictions
-from plots import plot_decoding_comparison, plot_dumbbell, plot_error_composition, plot_loss_curves, plot_small_vs_base
+from data import (
+    PHASE_A, PHASE_B, load_phase_c, load_phase_d, load_beam_search, load_beam_search_predictions,
+    load_phase_b_training, load_pretraining_loss_curves,
+)
+from plots import (
+    plot_decoding_comparison, plot_dumbbell, plot_error_composition, plot_loss_curves,
+    plot_model_comparison, SERIES_SMALL, SERIES_BASE, SERIES_T5VANILLA, SEQ_DARK, SEQ_LIGHT,
+)
 
 phase_c = load_phase_c()
 phase_d = load_phase_d()
 beam_search = load_beam_search()
 beam_predictions = load_beam_search_predictions()
 example_pool = beam_predictions["examples"]  # 1,000 rows, unfiltered: random.choice draws from all of them
+phase_b_training = load_phase_b_training()
+pretraining_loss_curves = load_pretraining_loss_curves()
 
-# metrics.json's own best_finetuned_model picks by raw corpus BLEU alone
-# (codet5-small, +0.36 points). The project went with codet5-base instead,
-# since its Exact Match is clearly higher (66.1% vs 64.7%) and that BLEU
-# gap is negligible: see report.txt for the reasoning.
+# metrics.json's own best_finetuned_model now picks codet5-base by raw corpus BLEU
+# alone (89.49, the highest of the three fine-tuned models), so no manual override
+# is needed here anymore. Its Exact Match (64.2%) is a hair below codet5-small's
+# (64.8%): see report.txt for why that razor-thin gap (0.6pp, 6 examples out of
+# 1,000) isn't treated as a real difference.
 BEST_FINETUNED_LABEL = "codet5-base"
 best_family = next(f for f in phase_c["families"] if f["label"] == BEST_FINETUNED_LABEL)
+t5vanilla_family = next(f for f in phase_c["families"] if f["key"] == "t5vanilla")
+
+# Code-pretraining effect: same size as codet5-base (t5-base, ~220M params),
+# same fine-tuning recipe, the only variable that changes is whether the
+# pretraining corpus was code (CodeT5) or generic text (vanilla T5).
+pretrain_bleu_delta = best_family["fine_tuned"]["corpus_bleu"] - t5vanilla_family["fine_tuned"]["corpus_bleu"]
+pretrain_em_delta = best_family["fine_tuned"]["exact_match"] - t5vanilla_family["fine_tuned"]["exact_match"]
 bleu_delta = phase_d["len128"]["corpus_bleu"] - phase_d["len256"]["corpus_bleu"]
 em_delta = phase_d["len128"]["exact_match"] - phase_d["len256"]["exact_match"]
 time_delta_pct = 100 * (phase_d["len128"]["train_runtime_seconds"] - phase_d["len256"]["train_runtime_seconds"]) / phase_d["len256"]["train_runtime_seconds"]
 flos_delta_pct = 100 * (phase_d["len128"]["total_flos"] - phase_d["len256"]["total_flos"]) / phase_d["len256"]["total_flos"]
 train_minutes_256 = phase_d["len256"]["train_runtime_seconds"] / 60
 train_minutes_128 = phase_d["len128"]["train_runtime_seconds"] / 60
+
+# t5vanilla vs codet5-base training compute, expressed as a percentage (mirrors
+# flos_delta_pct above for the ablation tab) rather than leaving raw scientific
+# notation as the only figure shown on screen.
+flos_pretrain_delta_pct = 100 * (
+    phase_b_training["t5vanilla"]["total_flos"] - phase_b_training["base"]["total_flos"]
+) / phase_b_training["base"]["total_flos"]
 
 # Beam search (num_beams=4) vs greedy (num_beams=1), same chosen fine-tuned model.
 # A small, direction-confirmed gain at a measured (not estimated) inference cost:
@@ -73,6 +96,18 @@ error_rows = [
         "serious": phase_c["by_name"]["codet5-base (zero-shot)"]["error_categories"]["other_mismatch"],
         "critical": phase_c["by_name"]["codet5-base (zero-shot)"]["error_categories"]["empty_output"],
     }},
+    {"label": "t5vanilla - fine-tuned", **{
+        "good": phase_c["by_name"]["t5vanilla (fine-tuned)"]["exact_match"] * 10,
+        "warning": phase_c["by_name"]["t5vanilla (fine-tuned)"]["error_categories"]["near_miss"],
+        "serious": phase_c["by_name"]["t5vanilla (fine-tuned)"]["error_categories"]["other_mismatch"],
+        "critical": phase_c["by_name"]["t5vanilla (fine-tuned)"]["error_categories"]["empty_output"],
+    }},
+    {"label": "t5vanilla - zero-shot", **{
+        "good": phase_c["by_name"]["t5vanilla (zero-shot)"]["exact_match"] * 10,
+        "warning": phase_c["by_name"]["t5vanilla (zero-shot)"]["error_categories"]["near_miss"],
+        "serious": phase_c["by_name"]["t5vanilla (zero-shot)"]["error_categories"]["other_mismatch"],
+        "critical": phase_c["by_name"]["t5vanilla (zero-shot)"]["error_categories"]["empty_output"],
+    }},
 ]
 
 
@@ -101,10 +136,6 @@ def ablation_card(value, label, good):
 
 def note_card(title, body):
     return f'<div class="note-card"><div class="note-title">{title}</div><div class="note-body">{body}</div></div>'
-
-
-def note_row(*cards):
-    return '<div class="note-row">' + "".join(cards) + "</div>"
 
 
 def pick_random_example():
@@ -179,6 +210,10 @@ html, body, gradio-app {
 .gradio-container .prose li, .gradio-container .md, .gradio-container span {
     color: #ffffff !important;
 }
+.gradio-container .prose em, .gradio-container .prose i,
+.gradio-container .md em, .gradio-container .md i {
+    color: #c3c2b7 !important;
+}
 .gradio-container .prose strong, .gradio-container .prose b {
     color: #ffffff !important;
 }
@@ -188,7 +223,7 @@ button[role="tab"] {
     color: #c3c2b7 !important;
 }
 button[role="tab"].selected {
-    color: #3987e5 !important;
+    color: #e0b44c !important;
 }
 .stat-row, .note-row {
     display: flex;
@@ -239,6 +274,13 @@ button[role="tab"].selected {
 }
 .callout-title { font-weight: 700; font-size: 1.05rem; color: #ffffff; margin-bottom: 4px; }
 .callout-body { color: #c3c2b7; font-size: 0.92rem; }
+/* Reserved for null/noise findings (e.g. "small vs base: too close to call"), so
+   they don't share the same green "confirmed insight" accent as callouts about
+   real, confirmed effects (fine-tuning, code-pretraining, beam search). */
+.callout-muted {
+    background: #232322;
+    border-left-color: #6b6b66;
+}
 .gradio-container pre, .gradio-container pre code {
     background: #232322 !important;
     color: #e6e6e2 !important;
@@ -271,7 +313,8 @@ button[role="tab"].selected {
 with gr.Blocks(title="C# -> Java - CodeT5") as demo:
     gr.Markdown(
         "# From C# to Java with CodeT5\n"
-        "Fine-tuning, evaluation, and an ablation study across two CodeT5 models on the CodeXGLUE dataset."
+        "Fine-tuning, evaluation, and an ablation study across two CodeT5 models and a "
+        "non-code-pretrained baseline, on the CodeXGLUE dataset."
     )
 
     with gr.Tabs():
@@ -291,20 +334,75 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 stat_card(str(PHASE_B["epochs"]), "Epochs"),
                 stat_card(str(PHASE_B["max_length"]), "Max length"),
             ))
-            gr.Markdown("Identical configuration for codet5-small and codet5-base, for a fair comparison.")
+            gr.Markdown(
+                "Identical recipe for all three models (codet5-small, codet5-base, t5vanilla): any "
+                "difference in results traces back to the model, not the setup."
+            )
+            gr.Markdown("### Training cost per model (measured, same Colab T4 GPU)")
+            gr.HTML(stat_row(
+                stat_card(f"{phase_b_training['small']['train_runtime'] / 60:.1f} min", "codet5-small"),
+                stat_card(f"{phase_b_training['base']['train_runtime'] / 60:.1f} min", "codet5-base"),
+                stat_card(f"{phase_b_training['t5vanilla']['train_runtime'] / 60:.1f} min", "t5vanilla",
+                          delta=f"+{flos_pretrain_delta_pct:.0f}% FLOs vs codet5-base", tone="neutral"),
+            ))
+            gr.Markdown(
+                "*t5vanilla: same size as codet5-base, but its generic tokenizer represents code "
+                "less efficiently, so each step costs more compute.*"
+            )
+            gr.Markdown("### Validation loss per epoch, all three models")
+            gr.Plot(
+                plot_loss_curves([
+                    {"curve": pretraining_loss_curves["small"], "color": SERIES_SMALL, "label": "codet5-small"},
+                    {"curve": pretraining_loss_curves["base"], "color": SERIES_BASE, "label": "codet5-base"},
+                    {"curve": pretraining_loss_curves["t5vanilla"], "color": SERIES_T5VANILLA, "label": "t5vanilla"},
+                ]),
+                show_label=False,
+            )
+            gr.Markdown(
+                "*codet5-base overfits from epoch 3; t5vanilla is still improving at epoch 10 "
+                "(not converged in this budget).*"
+            )
 
-        with gr.Tab("Results"):
+        with gr.Tab("Results: Model Comparison"):
             gr.HTML(
                 f'<div class="callout">'
                 f'<div class="callout-title">Model selected: {BEST_FINETUNED_LABEL} (fine-tuned)</div>'
-                f'<div class="callout-body">Highest Exact Match '
-                f"({best_family['fine_tuned']['exact_match']:.1f}%), with corpus BLEU essentially tied "
-                f"against the alternative.</div></div>"
+                f'<div class="callout-body">Highest corpus BLEU '
+                f"({best_family['fine_tuned']['corpus_bleu']:.2f}) among all three fine-tuned models, "
+                f"with Exact Match a hair below codet5-small's (a 0.6pp gap this run, not a reliable "
+                f"difference: see below).</div></div>"
             )
             gr.Markdown("#### The effect of fine-tuning (BLEU, zero-shot -> fine-tuned)")
             gr.Plot(plot_dumbbell(phase_c["families"]), show_label=False)
-            gr.Markdown("#### small vs base, fine-tuned models")
-            gr.Plot(plot_small_vs_base(phase_c["families"]), show_label=False)
+            gr.Markdown(
+                "*Here light/dark blue = zero-shot vs fine-tuned; in the next chart each model gets "
+                "its own color.*"
+            )
+            gr.Markdown("#### small vs base vs t5vanilla, fine-tuned models")
+            gr.Plot(plot_model_comparison(phase_c["families"]), show_label=False)
+            gr.HTML(
+                '<div class="callout callout-muted">'
+                '<div class="callout-title">small vs base: too close to call</div>'
+                '<div class="callout-body">Retraining from scratch flipped which model leads on which '
+                'metric: the gap is smaller than run-to-run training noise, not a reliable difference '
+                'either way.</div></div>'
+            )
+            gr.Markdown("#### Does code-specific pretraining matter? (t5vanilla vs codet5-base, same size)")
+            gr.HTML(stat_row(
+                stat_card(f"{t5vanilla_family['fine_tuned']['corpus_bleu']:.2f}", "t5vanilla BLEU",
+                          delta=f"{-pretrain_bleu_delta:+.2f} pt vs codet5-base", tone="neutral"),
+                stat_card(f"{t5vanilla_family['fine_tuned']['exact_match']:.1f}%", "t5vanilla Exact Match",
+                          delta=f"{-pretrain_em_delta:+.1f} pp vs codet5-base", tone="bad"),
+            ))
+            gr.HTML(
+                '<div class="callout">'
+                '<div class="callout-title">Yes, and it shows up mostly on Exact Match</div>'
+                '<div class="callout-body">Same size, same recipe, only the pretraining corpus differs '
+                '(code vs generic text). On Exact Match the effect rivals fine-tuning itself, and dwarfs '
+                'the small-vs-base gap above.</div></div>'
+            )
+
+        with gr.Tab("Results: Decoding & Errors"):
             gr.Markdown("#### Decoding strategy: greedy vs beam search (codet5-base, fine-tuned)")
             gr.Plot(plot_decoding_comparison(beam_search), show_label=False)
             gr.HTML(stat_row(
@@ -318,21 +416,10 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
             gr.HTML(
                 '<div class="callout">'
                 '<div class="callout-title">A small, direction-confirmed gain from beam search</div>'
-                '<div class="callout-body">Re-running inference with beam search (num_beams=4) instead of '
-                f'greedy decoding on the same {BEST_FINETUNED_LABEL} (fine-tuned) checkpoint raises corpus BLEU '
-                f'by {beam_bleu_delta:+.2f} points ({beam_greedy["corpus_bleu"]:.2f} -&gt; '
-                f'{beam_beam4["corpus_bleu"]:.2f}, {beam_bleu_delta_rel_pct:+.2f}% relative) '
-                f'and Exact Match by {beam_em_delta:+.1f} points ({beam_greedy["exact_match"]:.1f}% -&gt; '
-                f'{beam_beam4["exact_match"]:.1f}%), for a measured (not estimated) cost of '
-                f'{beam_time_delta_pct:+.0f}% wall-clock time over the full 1,000-example test set '
-                f'({beam_greedy["elapsed_seconds"]:.0f}s -&gt; {beam_beam4["elapsed_seconds"]:.0f}s), far less '
-                'than the ~4x a naive "4 hypotheses instead of 1" estimate would suggest, since the beams are '
-                'batched on the GPU rather than run serially. Both metrics move the right way, but the gain is '
-                'roughly two orders of magnitude smaller than fine-tuning itself (~+87 BLEU, see above) and about '
-                '7x smaller than the max_length ablation (+5 BLEU, next tab), and small enough (5 examples out '
-                'of 1,000 for Exact Match) that we are not calling it a statistically confirmed improvement '
-                'without a significance test. Given how cheap it actually is, there is little reason not to use '
-                'it for final reported numbers.</div></div>'
+                f'<div class="callout-body">Measured cost: {beam_time_delta_pct:+.0f}% wall-clock, far '
+                'below the naive ~4x estimate (beams are batched on the GPU). The gain is ~two orders of '
+                'magnitude smaller than fine-tuning and too small to call statistically confirmed, but '
+                'cheap enough to keep.</div></div>'
             )
             gr.Markdown("#### Outcome composition per model")
             gr.Plot(plot_error_composition(error_rows), show_label=False)
@@ -363,22 +450,16 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 "    return br.compareTo(this);\n"
                 "}\n"
                 "```\n\n"
-                "The model keeps the same structure as the C#: cast to `BytesRef`, assert the type, then delegate "
-                "the comparison. The dataset's human reference solves the method in a completely different way, "
-                "comparing raw byte arrays directly instead of delegating. That mismatch is a limitation of the "
-                "dataset's reference translations, not a mistake by the model."
+                "*The model translates the C# structure faithfully; the human reference solves the method "
+                "a different way. A dataset limitation, not a model mistake.*"
             )
 
         with gr.Tab("Example Browser"):
             gr.Markdown(
                 "### One precomputed prediction at a time\n"
-                "Browsing the same 1,000 test-set examples used for the aggregate corpus BLEU / "
-                "Exact Match numbers above (codet5-base, fine-tuned, beam search num_beams=4). "
-                "**Nothing is generated live**: each click looks up one already-computed example, "
-                "drawn uniformly at random from all 1,000 test examples: exact_match odds are "
-                f"about 2 in 3, since {beam_beam4['exact_match']:.1f}% of the test set matches the "
-                "reference exactly. Any brief flash after clicking is just the page fetching that "
-                "example, not the model running."
+                "**Nothing is generated live**: each click draws one already-computed example, "
+                "uniformly at random from all 1,000 test rows (codet5-base fine-tuned, beam=4). "
+                f"About 2 in 3 draws are exact matches ({beam_beam4['exact_match']:.1f}% of the test set)."
             )
             example_random_btn = gr.Button("Random example", variant="primary")
             with gr.Row():
@@ -440,7 +521,13 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
 
         with gr.Tab("Ablation Study (128 vs 256)"):
             gr.Markdown("#### Validation loss per epoch")
-            gr.Plot(plot_loss_curves(phase_d), show_label=False)
+            gr.Plot(
+                plot_loss_curves([
+                    {"curve": phase_d["len256"]["eval_loss_curve"], "color": SEQ_DARK, "label": "max_length = 256"},
+                    {"curve": phase_d["len128"]["eval_loss_curve"], "color": SEQ_LIGHT, "label": "max_length = 128"},
+                ]),
+                show_label=False,
+            )
             gr.Markdown("#### Delta: 128 vs 256 tokens")
             gr.HTML(stat_row(
                 ablation_card(f"{bleu_delta:+.2f} pt", "BLEU", good=bleu_delta > 0),
@@ -451,32 +538,14 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                               good=flos_delta_pct < 0),
             ))
             gr.Markdown(
-                "**Conclusion**: the resource savings at 128 tokens (~24% less training time, ~20% fewer FLOs) "
-                "don't justify the quality drop (-5 BLEU, -2.7pp Exact Match): some C#/Java methods exceed 128 "
-                "tokens and get truncated. **256 remains the better choice.**"
+                "**Conclusion**: the compute savings at 128 tokens don't justify the quality drop "
+                "(methods longer than 128 tokens get truncated). **256 remains the better choice.**"
             )
-
-        with gr.Tab("Conclusion & Next Steps"):
             gr.Markdown(
-                "Beam search decoding (tried above, in Results) closes out one item from this list: "
-                "a small, direction-confirmed gain, not a major lever. Remaining open items:"
+                "#### Wrapping up\n"
+                "**Final configuration: codet5-base, fine-tuned, max_length 256, beam search.** "
+                "Natural next steps: early stopping, stronger regularization, data cleaning."
             )
-            gr.HTML(note_row(
-                note_card(
-                    "Early stopping",
-                    "Both runs reach their minimum validation loss well before epoch 10 "
-                    "(epoch 6 for 256 tokens, epoch 4 for 128) and overfit afterward.",
-                ),
-                note_card(
-                    "Stronger regularization",
-                    "More aggressive dropout, weight decay, or label smoothing.",
-                ),
-                note_card(
-                    "Data cleaning",
-                    "Filter out C#/Java pairs where the reference is an idiomatic rewrite "
-                    "rather than a literal translation.",
-                ),
-            ))
 
 if __name__ == "__main__":
     demo.launch(theme=gr.themes.Base(primary_hue="blue", neutral_hue="slate"), css=CUSTOM_CSS)

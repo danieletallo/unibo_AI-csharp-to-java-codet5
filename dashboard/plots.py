@@ -14,7 +14,13 @@ MUTED_INK = "#c3c2b7"
 GRID = "#2c2c2a"
 
 SERIES_SMALL = "#3987e5"
-SERIES_BASE = "#199e70"
+# Deliberately NOT green: green is already spoken for by STATUS_GOOD (the "exact
+# match" segment in the error-composition chart) and by the callout accent color
+# in app.py's CSS. Using it a third time for "codet5-base" risked green quietly
+# reading as "the winner" everywhere it appeared, even in charts arguing base and
+# small are statistically indistinguishable. Violet is unused elsewhere.
+SERIES_BASE = "#8c6fe0"
+SERIES_T5VANILLA = "#c3852a"
 SEQ_LIGHT = "#86b6ef"
 SEQ_DARK = "#3987e5"
 
@@ -24,7 +30,11 @@ STATUS_SERIOUS = "#ec835a"
 STATUS_CRITICAL = "#d03b3b"
 
 DPI = 150
-FIGSIZE_WIDE = (12, 3)
+# Dedicated to plot_error_composition, which always renders one row per model x
+# {fine-tuned, zero-shot}: 6 rows since t5vanilla was added, up from 4. Height is
+# taller than the other wide presets so row/label spacing doesn't crowd on a
+# projector.
+FIGSIZE_ERROR = (12, 4.0)
 FIGSIZE_TALL = (11, 3.2)
 FIGSIZE_SHORT = (11, 2.6)
 FIGSIZE_PAIR = (12, 3)
@@ -66,17 +76,35 @@ def plot_dumbbell(families):
     return fig
 
 
-def plot_small_vs_base(families):
-    """Grouped bars: BLEU and Exact Match, small vs base, both fine-tuned."""
+FAMILY_COLORS = {"small": SERIES_SMALL, "base": SERIES_BASE, "t5vanilla": SERIES_T5VANILLA}
+
+
+def plot_model_comparison(families):
+    """Grouped bars: BLEU and Exact Match, one bar per fine-tuned model family (any count)."""
     fig, axes = plt.subplots(1, 2, figsize=FIGSIZE_PAIR, dpi=DPI)
     fig.patch.set_facecolor(SURFACE)
     metrics = [("corpus_bleu", "Corpus BLEU"), ("exact_match", "Exact Match %")]
     for ax, (key, title) in zip(axes, metrics):
         values = [f["fine_tuned"][key] for f in families]
-        colors = [SERIES_SMALL, SERIES_BASE]
+        colors = [FAMILY_COLORS.get(f["key"], MUTED_INK) for f in families]
         bars = ax.bar([f["label"] for f in families], values, color=colors, width=0.55)
         for bar, v in zip(bars, values):
             ax.text(bar.get_x() + bar.get_width() / 2, v + 1.2, f"{v:.1f}", ha="center", color=INK, fontsize=9)
+            # A bar at (or near) zero height is easy to misread at a glance as a
+            # rendering bug or missing data rather than a deliberate result (e.g.
+            # t5vanilla's 0.0% Exact Match). Call it out explicitly with an arrow
+            # so it reads as "measured and real", not broken.
+            if key == "exact_match" and v < 1.0:
+                ax.annotate(
+                    "never exact",
+                    xy=(bar.get_x() + bar.get_width() / 2, v),
+                    xytext=(bar.get_x() + bar.get_width() / 2, 20),
+                    ha="center",
+                    fontsize=7.8,
+                    color=STATUS_CRITICAL,
+                    fontweight="bold",
+                    arrowprops=dict(arrowstyle="-", color=STATUS_CRITICAL, linewidth=1.2),
+                )
         ax.set_ylim(0, 100)
         ax.set_title(title, color=INK, fontsize=10)
         _style_axes(ax)
@@ -128,7 +156,7 @@ def plot_error_composition(rows):
 
     rows: list of {"label": str, "good": int, "warning": int, "serious": int, "critical": int}
     """
-    fig, ax = plt.subplots(figsize=FIGSIZE_WIDE, dpi=DPI)
+    fig, ax = plt.subplots(figsize=FIGSIZE_ERROR, dpi=DPI)
     fig.patch.set_facecolor(SURFACE)
     labels = [r["label"] for r in rows]
     keys = [("good", STATUS_GOOD, "Exact match"), ("warning", STATUS_WARNING, "Near miss"),
@@ -153,12 +181,17 @@ def plot_error_composition(rows):
     return fig
 
 
-def plot_loss_curves(phase_d):
-    """Eval_loss per epoch, max_length=128 vs 256, minimum point marked on each curve."""
+def plot_loss_curves(runs):
+    """Eval_loss per epoch, one line per run, minimum point marked on each curve.
+
+    runs: list of {"curve": [{"epoch":.., "eval_loss":..}, ...], "color": str, "label": str}.
+    """
     fig, ax = plt.subplots(figsize=FIGSIZE_TALL, dpi=DPI)
     fig.patch.set_facecolor(SURFACE)
-    for run, color, label in [(phase_d["len256"], SEQ_DARK, "max_length = 256"), (phase_d["len128"], SEQ_LIGHT, "max_length = 128")]:
-        curve = run["eval_loss_curve"]
+    for run in runs:
+        curve = run["curve"]
+        color = run["color"]
+        label = run["label"]
         epochs = [p["epoch"] for p in curve]
         losses = [p["eval_loss"] for p in curve]
         ax.plot(epochs, losses, color=color, linewidth=2, marker="o", markersize=4, label=label)
@@ -166,6 +199,21 @@ def plot_loss_curves(phase_d):
         ax.scatter([epochs[min_idx]], [losses[min_idx]], color=color, s=90, zorder=3, edgecolors=SURFACE, linewidths=1.5)
         ax.annotate(f"{losses[min_idx]:.4f}", (epochs[min_idx], losses[min_idx]), textcoords="offset points",
                     xytext=(0, 10), ha="center", color=color, fontsize=9, fontweight="bold")
+        # The min-point marker alone looks identical whether a curve converged at the
+        # last epoch or simply ran out of budget while still improving; the two only
+        # differ in the caption text beneath the chart. Flag the latter case directly
+        # on the chart too, so the point survives even if the caption goes unread.
+        if min_idx == len(losses) - 1 and len(losses) > 1:
+            ax.annotate(
+                "still decreasing\n(not converged)",
+                (epochs[min_idx], losses[min_idx]),
+                textcoords="offset points",
+                xytext=(18, -16),
+                ha="left",
+                color=color,
+                fontsize=7.8,
+                fontstyle="italic",
+            )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("eval_loss")
     ax.legend(facecolor=SURFACE, labelcolor=INK, edgecolor=MUTED_INK, fontsize=9)
