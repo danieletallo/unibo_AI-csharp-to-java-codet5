@@ -173,23 +173,17 @@ def pick_random_example():
     # (shared, screenshotted) without the presenter's narration.
     if is_match:
         outcome_note = (
-            "This row happens to be an exact match: the outcome about two-thirds of "
-            "random draws land on."
+            "This row happens to be an exact match!"
         )
     else:
         outcome_note = (
-            "This row is not an exact match: the outcome about one-third of random "
-            "draws land on, expected and disclosed above, not a failure. Differences from "
-            "the reference are often structural (e.g. a different but equally valid way of "
-            "writing the same method), so there's no need to hunt for a line-by-line diff."
+            "This row is not an exact match."
         )
 
     aggregate_html = note_card(
         "Aggregate over all 1,000 (same model, same beam=4, see Results tab)",
         f"Corpus BLEU {beam_beam4['corpus_bleu']:.2f}, Exact Match {beam_beam4['exact_match']:.1f}%. "
-        "This one row is a single data point behind that number, not a new metric: corpus BLEU is "
-        "computed over n-gram counts across the whole test set, not by averaging per-example "
-        f"sentence BLEU scores like the one above. {outcome_note}",
+        f"<br>{outcome_note}",
     )
     return ex["cs"], ex["java_reference"], ex["java_prediction"], stats_html, aggregate_html
 
@@ -334,10 +328,6 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 stat_card(str(PHASE_B["epochs"]), "Epochs"),
                 stat_card(str(PHASE_B["max_length"]), "Max length"),
             ))
-            gr.Markdown(
-                "Identical recipe for all three models (codet5-small, codet5-base, t5vanilla): any "
-                "difference in results traces back to the model, not the setup."
-            )
             gr.Markdown("### Training cost per model (measured, same Colab T4 GPU)")
             gr.HTML(stat_row(
                 stat_card(f"{phase_b_training['small']['train_runtime'] / 60:.1f} min", "codet5-small"),
@@ -368,25 +358,15 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 f'<div class="callout">'
                 f'<div class="callout-title">Model selected: {BEST_FINETUNED_LABEL} (fine-tuned)</div>'
                 f'<div class="callout-body">Highest corpus BLEU '
-                f"({best_family['fine_tuned']['corpus_bleu']:.2f}) among all three fine-tuned models, "
-                f"with Exact Match a hair below codet5-small's (a 0.6pp gap this run, not a reliable "
-                f"difference: see below).</div></div>"
+                f"({best_family['fine_tuned']['corpus_bleu']:.2f}) among all three fine-tuned models."
+                f"</div></div>"
             )
             gr.Markdown("#### The effect of fine-tuning (BLEU, zero-shot -> fine-tuned)")
             gr.Plot(plot_dumbbell(phase_c["families"]), show_label=False)
-            gr.Markdown(
-                "*Here light/dark blue = zero-shot vs fine-tuned; in the next chart each model gets "
-                "its own color.*"
-            )
+
             gr.Markdown("#### small vs base vs t5vanilla, fine-tuned models")
             gr.Plot(plot_model_comparison(phase_c["families"]), show_label=False)
-            gr.HTML(
-                '<div class="callout callout-muted">'
-                '<div class="callout-title">small vs base: too close to call</div>'
-                '<div class="callout-body">Retraining from scratch flipped which model leads on which '
-                'metric: the gap is smaller than run-to-run training noise, not a reliable difference '
-                'either way.</div></div>'
-            )
+
             gr.Markdown("#### Does code-specific pretraining matter? (t5vanilla vs codet5-base, same size)")
             gr.HTML(stat_row(
                 stat_card(f"{t5vanilla_family['fine_tuned']['corpus_bleu']:.2f}", "t5vanilla BLEU",
@@ -397,9 +377,7 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
             gr.HTML(
                 '<div class="callout">'
                 '<div class="callout-title">Yes, and it shows up mostly on Exact Match</div>'
-                '<div class="callout-body">Same size, same recipe, only the pretraining corpus differs '
-                '(code vs generic text). On Exact Match the effect rivals fine-tuning itself, and dwarfs '
-                'the small-vs-base gap above.</div></div>'
+                '</div></div>'
             )
 
         with gr.Tab("Results: Decoding & Errors"):
@@ -416,9 +394,7 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
             gr.HTML(
                 '<div class="callout">'
                 '<div class="callout-title">A small, direction-confirmed gain from beam search</div>'
-                f'<div class="callout-body">Measured cost: {beam_time_delta_pct:+.0f}% wall-clock, far '
-                'below the naive ~4x estimate (beams are batched on the GPU). The gain is ~two orders of '
-                'magnitude smaller than fine-tuning and too small to call statistically confirmed, but '
+                f'<div class="callout-body">Measured cost: {beam_time_delta_pct:+.0f}% wall-clock -> '
                 'cheap enough to keep.</div></div>'
             )
             gr.Markdown("#### Outcome composition per model")
