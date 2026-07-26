@@ -22,6 +22,15 @@ TRAIN_METRICS_DIR = os.path.join(REPO_ROOT, "phase_B_finetuning", "results")
 PHASE_A = {"train": 10300, "validation": 500, "test": 1000}
 PHASE_B = {"learning_rate": "5e-5", "batch_size": 8, "epochs": 10, "max_length": 256}
 
+# Static facts for the Data tab's opening callout, stated up front since
+# it's the presentation's first tab. Task and dataset are one fact, not
+# two: the HuggingFace task (C# -> Java code translation) is the one this
+# dataset is built for, picking the dataset is picking the task.
+PROJECT_INFO = {
+    "dataset": "CodeXGLUE code-to-code-trans (Hugging Face), task: C# -> Java code translation",
+    "goal": "Fine-tune and compare 3 models: codet5-small, codet5-base, Google's T5-base (t5vanilla)",
+}
+
 # Maps each model family to the file suffix used for its Phase B artifacts
 # (train_metrics_<suffix>.json, trainer_state_<suffix>.json).
 TRAIN_ARTIFACT_SUFFIX = {"small": "codet5_small", "base": "codet5_base", "t5vanilla": "t5vanilla"}

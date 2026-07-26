@@ -2,9 +2,11 @@
 #
 # Presents Phase A-D of the C# -> Java project for a live presentation:
 # dataset facts, training setup, Phase C evaluation (fine-tuning impact,
-# small vs base, decoding strategy, error composition), and Phase D's
-# ablation study (128 vs 256 tokens). Reads the same JSON files Phase C/D
-# already save, nothing here is recomputed.
+# small vs base, error composition), Phase D's ablation study (128 vs 256
+# tokens), a bonus decoding-strategy experiment (beam search vs greedy,
+# framed as an extra beyond the required ablation), and a final Example
+# Browser tab. Reads the same JSON files Phase C/D already save, nothing
+# here is recomputed.
 #
 # Styling is forced to a single dark look via custom CSS instead of relying
 # on Gradio's automatic light/dark switching, since the charts hardcode a
@@ -16,8 +18,8 @@ import random
 import gradio as gr
 
 from data import (
-    PHASE_A, PHASE_B, load_phase_c, load_phase_d, load_beam_search, load_beam_search_predictions,
-    load_phase_b_training, load_pretraining_loss_curves,
+    PHASE_A, PHASE_B, PROJECT_INFO, load_phase_c, load_phase_d, load_beam_search,
+    load_beam_search_predictions, load_phase_b_training, load_pretraining_loss_curves,
 )
 from plots import (
     plot_decoding_comparison, plot_dumbbell, plot_error_composition, plot_loss_curves,
@@ -181,7 +183,7 @@ def pick_random_example():
         )
 
     aggregate_html = note_card(
-        "Aggregate over all 1,000 (same model, same beam=4, see Results tab)",
+        "Aggregate over all 1,000 (same model, same beam=4, see Bonus tab)",
         f"Corpus BLEU {beam_beam4['corpus_bleu']:.2f}, Exact Match {beam_beam4['exact_match']:.1f}%. "
         f"<br>{outcome_note}",
     )
@@ -305,14 +307,16 @@ button[role="tab"].selected {
 """
 
 with gr.Blocks(title="C# -> Java - CodeT5") as demo:
-    gr.Markdown(
-        "# From C# to Java with CodeT5\n"
-        "Fine-tuning, evaluation, and an ablation study across two CodeT5 models and a "
-        "non-code-pretrained baseline, on the CodeXGLUE dataset."
-    )
+    gr.Markdown("# From C# to Java with CodeT5")
 
     with gr.Tabs():
         with gr.Tab("Data"):
+            gr.HTML(
+                '<div class="callout">'
+                f'<div class="callout-title">Dataset: {PROJECT_INFO["dataset"]}</div>'
+                f'<div class="callout-body">Goal: {PROJECT_INFO["goal"]}</div>'
+                '</div>'
+            )
             gr.Markdown("### Dataset split")
             gr.HTML(stat_row(
                 stat_card(f"{PHASE_A['train']:,}", "Train examples"),
@@ -336,8 +340,8 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                           delta=f"+{flos_pretrain_delta_pct:.0f}% FLOs vs codet5-base", tone="neutral"),
             ))
             gr.Markdown(
-                "*t5vanilla: same size as codet5-base, but its generic tokenizer represents code "
-                "less efficiently, so each step costs more compute.*"
+                "*t5vanilla = t5-base (Google): same size and fine-tuning setup as "
+                "codet5-base, generic tokenizer costs more per step.*"
             )
             gr.Markdown("### Validation loss per epoch, all three models")
             gr.Plot(
@@ -348,10 +352,7 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 ]),
                 show_label=False,
             )
-            gr.Markdown(
-                "*codet5-base overfits from epoch 3; t5vanilla is still improving at epoch 10 "
-                "(not converged in this budget).*"
-            )
+            gr.Markdown("*codet5-base overfits after epoch 3; t5vanilla still improving at epoch 10.*")
 
         with gr.Tab("Results: Model Comparison"):
             gr.HTML(
@@ -377,26 +378,10 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
             gr.HTML(
                 '<div class="callout">'
                 '<div class="callout-title">Yes, and it shows up mostly on Exact Match</div>'
-                '</div></div>'
+                '</div>'
             )
 
-        with gr.Tab("Results: Decoding & Errors"):
-            gr.Markdown("#### Decoding strategy: greedy vs beam search (codet5-base, fine-tuned)")
-            gr.Plot(plot_decoding_comparison(beam_search), show_label=False)
-            gr.HTML(stat_row(
-                stat_card(f"{beam_beam4['corpus_bleu']:.2f}", "BLEU, beam=4",
-                          delta=f"{beam_bleu_delta:+.2f} pt vs greedy", tone="neutral"),
-                stat_card(f"{beam_beam4['exact_match']:.1f}%", "Exact Match, beam=4",
-                          delta=f"{beam_em_delta:+.1f} pp vs greedy", tone="neutral"),
-                stat_card(f"{beam_beam4['elapsed_seconds']:.0f}s", "Generation time, beam=4",
-                          delta=f"{beam_time_delta_pct:+.0f}% vs greedy", tone="neutral"),
-            ))
-            gr.HTML(
-                '<div class="callout">'
-                '<div class="callout-title">A small, direction-confirmed gain from beam search</div>'
-                f'<div class="callout-body">Measured cost: {beam_time_delta_pct:+.0f}% wall-clock -> '
-                'cheap enough to keep.</div></div>'
-            )
+        with gr.Tab("Results: Errors"):
             gr.Markdown("#### Outcome composition per model")
             gr.Plot(plot_error_composition(error_rows), show_label=False)
             gr.Markdown(
@@ -426,16 +411,57 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 "    return br.compareTo(this);\n"
                 "}\n"
                 "```\n\n"
-                "*The model translates the C# structure faithfully; the human reference solves the method "
-                "a different way. A dataset limitation, not a model mistake.*"
+                "*A faithful translation; the reference just solves it differently.*"
             )
+
+        with gr.Tab("Ablation Study (128 vs 256)"):
+            gr.Markdown("#### Validation loss per epoch (codet5-base)")
+            gr.Plot(
+                plot_loss_curves([
+                    {"curve": phase_d["len256"]["eval_loss_curve"], "color": SEQ_DARK, "label": "max_length = 256"},
+                    {"curve": phase_d["len128"]["eval_loss_curve"], "color": SEQ_LIGHT, "label": "max_length = 128"},
+                ]),
+                show_label=False,
+            )
+            gr.Markdown("#### Delta: 128 vs 256 tokens")
+            gr.HTML(stat_row(
+                ablation_card(f"{bleu_delta:+.2f} pt", "BLEU", good=bleu_delta > 0),
+                ablation_card(f"{em_delta:+.1f} pp", "Exact Match", good=em_delta > 0),
+                ablation_card(f"{time_delta_pct:+.1f}%", f"Training time ({train_minutes_128:.1f} vs {train_minutes_256:.1f} min)",
+                              good=time_delta_pct < 0),
+                ablation_card(f"{flos_delta_pct:+.1f}%", f"Total FLOs ({phase_d['len128']['total_flos']:.2e} vs {phase_d['len256']['total_flos']:.2e})",
+                              good=flos_delta_pct < 0),
+            ))
+            gr.Markdown("**256 remains the better choice.**")
+
+        with gr.Tab("Bonus: Beam Search"):
+            gr.HTML(
+                '<div class="callout">'
+                '<div class="callout-title">Extra experiment, beyond the required ablation</div>'
+                '<div class="callout-body">Beam search (beam=4) vs greedy decoding (beam=1).</div>'
+                '</div>'
+            )
+            gr.Markdown("#### Decoding strategy: greedy vs beam search (codet5-base, fine-tuned)")
+            gr.Plot(plot_decoding_comparison(beam_search), show_label=False)
+            gr.HTML(stat_row(
+                stat_card(f"{beam_beam4['corpus_bleu']:.2f}", "BLEU, beam=4",
+                          delta=f"{beam_bleu_delta:+.2f} pt vs greedy", tone="neutral"),
+                stat_card(f"{beam_beam4['exact_match']:.1f}%", "Exact Match, beam=4",
+                          delta=f"{beam_em_delta:+.1f} pp vs greedy", tone="neutral"),
+                stat_card(f"{beam_beam4['elapsed_seconds']:.0f}s", "Generation time, beam=4",
+                          delta=f"{beam_time_delta_pct:+.0f}% vs greedy", tone="neutral"),
+            ))
+            gr.HTML(
+                '<div class="callout">'
+                '<div class="callout-title">Small, direction-confirmed gain</div>'
+                '</div>'
+            )
+            gr.Markdown("**Final setup: codet5-base, 256 tokens, beam search.**")
 
         with gr.Tab("Example Browser"):
             gr.Markdown(
                 "### One precomputed prediction at a time\n"
-                "**Nothing is generated live**: each click draws one already-computed example, "
-                "uniformly at random from all 1,000 test rows (codet5-base fine-tuned, beam=4). "
-                f"About 2 in 3 draws are exact matches ({beam_beam4['exact_match']:.1f}% of the test set)."
+                "**Nothing is generated live.** Random draw from all 1,000 test rows."
             )
             example_random_btn = gr.Button("Random example", variant="primary")
             with gr.Row():
@@ -493,34 +519,6 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 # This is a JSON lookup, not model inference: suppress Gradio's default
                 # loading spinner so it can't be misread as "the model is running".
                 show_progress="hidden",
-            )
-
-        with gr.Tab("Ablation Study (128 vs 256)"):
-            gr.Markdown("#### Validation loss per epoch")
-            gr.Plot(
-                plot_loss_curves([
-                    {"curve": phase_d["len256"]["eval_loss_curve"], "color": SEQ_DARK, "label": "max_length = 256"},
-                    {"curve": phase_d["len128"]["eval_loss_curve"], "color": SEQ_LIGHT, "label": "max_length = 128"},
-                ]),
-                show_label=False,
-            )
-            gr.Markdown("#### Delta: 128 vs 256 tokens")
-            gr.HTML(stat_row(
-                ablation_card(f"{bleu_delta:+.2f} pt", "BLEU", good=bleu_delta > 0),
-                ablation_card(f"{em_delta:+.1f} pp", "Exact Match", good=em_delta > 0),
-                ablation_card(f"{time_delta_pct:+.1f}%", f"Training time ({train_minutes_128:.1f} vs {train_minutes_256:.1f} min)",
-                              good=time_delta_pct < 0),
-                ablation_card(f"{flos_delta_pct:+.1f}%", f"Total FLOs ({phase_d['len128']['total_flos']:.2e} vs {phase_d['len256']['total_flos']:.2e})",
-                              good=flos_delta_pct < 0),
-            ))
-            gr.Markdown(
-                "**Conclusion**: the compute savings at 128 tokens don't justify the quality drop "
-                "(methods longer than 128 tokens get truncated). **256 remains the better choice.**"
-            )
-            gr.Markdown(
-                "#### Wrapping up\n"
-                "**Final configuration: codet5-base, fine-tuned, max_length 256, beam search.** "
-                "Natural next steps: early stopping, stronger regularization, data cleaning."
             )
 
 if __name__ == "__main__":
