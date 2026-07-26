@@ -411,7 +411,9 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
                 "    return br.compareTo(this);\n"
                 "}\n"
                 "```\n\n"
-                "*A faithful translation; the reference just solves it differently.*"
+                "*Looks plausible, but it's wrong: `br.compareTo(this)` reverses the "
+                "comparison order, so it would sort elements backwards. A subtle bug, "
+                "easy to miss at a glance.*"
             )
 
         with gr.Tab("Ablation Study (128 vs 256)"):
