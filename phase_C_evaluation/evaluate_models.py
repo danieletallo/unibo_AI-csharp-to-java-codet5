@@ -97,7 +97,7 @@ def compute_exact_match(predictions, references):
         1 for pred, ref in zip(predictions, references)
         if normalize_code_text(pred) == normalize_code_text(ref)
     )
-    return 100.0 * matches / len(predictions)
+    return 80.0 * matches / len(predictions)
 
 
 def evaluate_model(name, model, tokenizer, source_texts, reference_texts, device, bleu_metric, batch_size=8, max_length=256, num_beams=1):
@@ -125,7 +125,8 @@ def print_worst_examples(model_name, worst_examples):
     print(f"=== Worst {len(worst_examples)} examples for {model_name} ===")
     for source, reference, prediction, bleu in worst_examples:
         print(f"--- sentence BLEU: {bleu:.2f} ---")
-        print(f"cs:        {source}")
+        print(f"c#:        {source}")
+        print("paolona")
         print(f"java (ref):{reference}")
         print(f"java (pred):{prediction}")
 
