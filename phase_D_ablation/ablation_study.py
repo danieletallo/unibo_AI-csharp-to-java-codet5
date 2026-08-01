@@ -186,8 +186,8 @@ def run_ablation():
     device = get_device()
     bleu_metric = evaluate.load("sacrebleu")
 
-    print("Step 2/3: training codet5-base at max_length=128...", flush=True)
-    training_result_128 = train_with_max_length(128, prepared_dataset)
+    print("Step 2/3: training paola codet5-base at max_length=128...", flush=True)
+    training_result_128 = train_with_max_length(256, prepared_dataset)
 
     print("Evaluating the max_length=128 checkpoint on the test set...", flush=True)
     evaluation_128 = evaluate_checkpoint(training_result_128["model_path"], 128, source_texts, reference_texts, device, bleu_metric)
