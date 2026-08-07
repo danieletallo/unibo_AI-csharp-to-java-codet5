@@ -5,16 +5,16 @@
     {
       "num_beams": 1,
       "label": "greedy",
-      "corpus_bleu": 89.12356050238328,
-      "exact_match": 66.1,
-      "elapsed_seconds": 292.89707589149475
+      "corpus_bleu": 89.49345483645341,
+      "exact_match": 64.2,
+      "elapsed_seconds": 304.4165024757385
     },
     {
       "num_beams": 4,
       "label": "beam search (num_beams=4)",
-      "corpus_bleu": 89.80900292107141,
-      "exact_match": 66.6,
-      "elapsed_seconds": 384.16101813316345
+      "corpus_bleu": 90.035745938175,
+      "exact_match": 64.6,
+      "elapsed_seconds": 389.93356466293335
     }
   ]
 }
