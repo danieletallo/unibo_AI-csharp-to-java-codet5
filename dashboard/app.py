@@ -314,6 +314,7 @@ with gr.Blocks(title="C# -> Java - CodeT5") as demo:
             gr.HTML(
                 '<div class="callout">'
                 f'<div class="callout-title">Dataset: {PROJECT_INFO["dataset"]}</div>'
+                f'<div class="callout-title">Task: {PROJECT_INFO["task"]}</div>'
                 f'<div class="callout-body">Goal: {PROJECT_INFO["goal"]}</div>'
                 '</div>'
             )

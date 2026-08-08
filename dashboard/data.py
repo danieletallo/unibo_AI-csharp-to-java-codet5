@@ -27,7 +27,8 @@ PHASE_B = {"learning_rate": "5e-5", "batch_size": 8, "epochs": 10, "max_length":
 # two: the HuggingFace task (C# -> Java code translation) is the one this
 # dataset is built for, picking the dataset is picking the task.
 PROJECT_INFO = {
-    "dataset": "CodeXGLUE code-to-code-trans (Hugging Face), task: C# -> Java code translation",
+    "dataset": "CodeXGLUE code-to-code-trans",
+    "task": "C# -> Java code translation",
     "goal": "Fine-tune and compare 3 models: codet5-small, codet5-base, Google's T5-base (t5vanilla)",
 }
 
